@@ -77,8 +77,34 @@ impl Parser {
             Token::Event => self.parse_event_def(),
             Token::Fn | Token::Coroutine => self.parse_fn_def(),
             Token::Let => self.parse_var_decl(),
+            Token::State => self.parse_state_decl(),
             _ => self.parse_statement(),
         }
+    }
+
+    fn parse_state_decl(&mut self) -> Result<AstNode, ParseError> {
+        self.advance(); // consume 'state'
+        let name = match self.advance() {
+            Token::Identifier(s) => s,
+            t => {
+                return Err(ParseError::Expected {
+                    expected: "state variable name".to_string(),
+                    got: t,
+                    line: 0,
+                    col: 0,
+                })
+            }
+        };
+        self.expect(&Token::Colon)?;
+        let var_type = self.parse_type()?;
+        self.expect(&Token::Eq)?;
+        let initializer = self.parse_expression()?;
+        self.expect(&Token::Semicolon)?;
+        Ok(AstNode::StateDecl {
+            name,
+            var_type,
+            initializer: Box::new(initializer),
+        })
     }
 
     fn parse_entity_def(&mut self) -> Result<AstNode, ParseError> {
@@ -471,6 +497,9 @@ impl Parser {
                 }
                 Token::Let => {
                     statements.push(self.parse_var_decl()?);
+                }
+                Token::State => {
+                    statements.push(self.parse_state_decl()?);
                 }
                 _ => {
                     statements.push(self.parse_statement()?);

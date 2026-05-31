@@ -8,6 +8,7 @@ description = "NexScript scripting language — lexer, parser, bytecode compiler
 thiserror = { workspace = true }
 serde = { workspace = true }
 bincode = { workspace = true }
+rand = "0.8"
 
 [dev-dependencies]
 criterion = "0.5"

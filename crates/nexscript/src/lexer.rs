@@ -27,6 +27,7 @@ pub enum Token {
     Coroutine,
     Yield,
     Await,
+    State,
     True,
     False,
     Null,
@@ -220,6 +221,7 @@ impl Lexer {
             "coroutine" => Token::Coroutine,
             "yield" => Token::Yield,
             "await" => Token::Await,
+            "state" => Token::State,
             "true" => Token::True,
             "false" => Token::False,
             "null" => Token::Null,
@@ -233,7 +235,7 @@ impl Lexer {
             "vec3" => Token::TypeVec3,
             "vec4" => Token::TypeVec4,
             "quat" => Token::TypeQuat,
-            "entity" => Token::TypeEntity,
+            "ent" => Token::TypeEntity,
             _ => Token::Identifier(s),
         }
     }
