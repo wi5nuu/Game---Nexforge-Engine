@@ -32,7 +32,9 @@ impl<'a> RenderContext<'a> {
 
     pub fn initialize(&mut self, window: &'a winit::window::Window) -> Result<(), RenderError> {
         let size = window.inner_size();
-        self.size = (size.width, size.height);
+        let width = size.width.max(1);
+        let height = size.height.max(1);
+        self.size = (width, height);
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             dx12_shader_compiler: wgpu::Dx12Compiler::Fxc,
@@ -53,7 +55,7 @@ impl<'a> RenderContext<'a> {
         let format = caps.formats[0];
         let present_mode = if caps.present_modes.contains(&wgpu::PresentMode::Mailbox) { wgpu::PresentMode::Mailbox } else { wgpu::PresentMode::Fifo };
         let config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT, format, width: size.width, height: size.height,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT, format, width, height,
             present_mode, alpha_mode: caps.alpha_modes[0], view_formats: vec![],
             desired_maximum_frame_latency: 2,
         };
