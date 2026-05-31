@@ -8,17 +8,115 @@ pub enum AudioError {
     DeviceError(String),
     #[error("Audio stream error")]
     StreamError,
+    #[error("Sample not found: {0}")]
+    SampleNotFound(String),
 }
+
+pub enum AudioBus {
+    Sfx,
+    Music,
+    Voice,
+    Ambient,
+}
+
+impl AudioBus {
+    pub fn name(&self) -> &str {
+        match self { AudioBus::Sfx => "sfx", AudioBus::Music => "music", AudioBus::Voice => "voice", AudioBus::Ambient => "ambient" }
+    }
+    pub fn index(&self) -> usize {
+        match self { AudioBus::Sfx => 0, AudioBus::Music => 1, AudioBus::Voice => 2, AudioBus::Ambient => 3 }
+    }
+}
+
+pub struct AudioClip {
+    pub samples: Vec<f32>,
+    pub sample_rate: u32,
+    pub channels: u16,
+    pub duration: f32,
+}
+
+impl AudioClip {
+    pub fn new(samples: Vec<f32>, sample_rate: u32, channels: u16) -> Self {
+        let duration = if sample_rate > 0 { samples.len() as f32 / (sample_rate * channels as u32) as f32 } else { 0.0 };
+        Self { samples, sample_rate, channels, duration }
+    }
+
+    pub fn sine_wave(freq: f32, duration: f32, sample_rate: u32) -> Self {
+        let num_samples = (sample_rate as f32 * duration) as usize;
+        let samples: Vec<f32> = (0..num_samples).map(|i| {
+            let t = i as f32 / sample_rate as f32;
+            (2.0 * std::f32::consts::PI * freq * t).sin() * 0.5
+        }).collect();
+        Self::new(samples, sample_rate, 1)
+    }
+}
+
+pub struct SpatialAudioSource {
+    pub position: [f32; 3],
+    pub velocity: [f32; 3],
+    pub min_distance: f32,
+    pub max_distance: f32,
+    pub volume: f32,
+    pub pitch: f32,
+    pub looping: bool,
+    pub clip: Option<AudioClip>,
+}
+
+impl SpatialAudioSource {
+    pub fn new() -> Self {
+        Self { position: [0.0; 3], velocity: [0.0; 3], min_distance: 1.0, max_distance: 50.0, volume: 1.0, pitch: 1.0, looping: false, clip: None }
+    }
+
+    pub fn calculate_attenuation(&self, listener_pos: [f32; 3]) -> f32 {
+        let dx = self.position[0] - listener_pos[0];
+        let dy = self.position[1] - listener_pos[1];
+        let dz = self.position[2] - listener_pos[2];
+        let dist = (dx * dx + dy * dy + dz * dz).sqrt();
+        if dist <= self.min_distance { 1.0 }
+        else if dist >= self.max_distance { 0.0 }
+        else { 1.0 - (dist - self.min_distance) / (self.max_distance - self.min_distance) }
+    }
+
+    pub fn doppler_pitch(&self, listener_vel: [f32; 3], listener_pos: [f32; 3], speed_of_sound: f32) -> f32 {
+        let dx = self.position[0] - listener_pos[0];
+        let dy = self.position[1] - listener_pos[1];
+        let dz = self.position[2] - listener_pos[2];
+        let dist = (dx * dx + dy * dy + dz * dz).sqrt().max(0.001);
+        let dir = [dx / dist, dy / dist, dz / dist];
+        let v_rel = (self.velocity[0] - listener_vel[0]) * dir[0] + (self.velocity[1] - listener_vel[1]) * dir[1] + (self.velocity[2] - listener_vel[2]) * dir[2];
+        (speed_of_sound + v_rel) / speed_of_sound
+    }
+}
+
+impl Default for SpatialAudioSource { fn default() -> Self { Self::new() } }
+
+pub struct AudioBusChannel {
+    pub volume: f32,
+    pub sources: Vec<SpatialAudioSource>,
+}
+
+impl AudioBusChannel {
+    pub fn new() -> Self { Self { volume: 1.0, sources: Vec::new() } }
+}
+
+impl Default for AudioBusChannel { fn default() -> Self { Self::new() } }
 
 pub struct AudioEngine {
     pub master_volume: f32,
+    pub listener_position: [f32; 3],
+    pub listener_velocity: [f32; 3],
+    pub listener_forward: [f32; 3],
+    pub speed_of_sound: f32,
+    pub buses: [AudioBusChannel; 4],
     initialized: bool,
 }
 
 impl AudioEngine {
     pub fn new() -> Self {
         Self {
-            master_volume: 1.0,
+            master_volume: 1.0, listener_position: [0.0; 3], listener_velocity: [0.0; 3],
+            listener_forward: [0.0, 0.0, -1.0], speed_of_sound: 343.0,
+            buses: [AudioBusChannel::new(), AudioBusChannel::new(), AudioBusChannel::new(), AudioBusChannel::new()],
             initialized: false,
         }
     }
@@ -28,16 +126,40 @@ impl AudioEngine {
         Ok(())
     }
 
-    pub fn is_initialized(&self) -> bool {
-        self.initialized
+    pub fn play(&mut self, clip: AudioClip, bus: AudioBus) {
+        let mut source = SpatialAudioSource::new();
+        source.clip = Some(clip);
+        self.buses[bus.index()].sources.push(source);
     }
+
+    pub fn play_3d(&mut self, clip: AudioClip, position: [f32; 3], bus: AudioBus) {
+        let mut source = SpatialAudioSource::new();
+        source.position = position;
+        source.clip = Some(clip);
+        self.buses[bus.index()].sources.push(source);
+    }
+
+    pub fn set_bus_volume(&mut self, bus: AudioBus, volume: f32) {
+        self.buses[bus.index()].volume = volume.clamp(0.0, 1.0);
+    }
+
+    pub fn mix_sample(&self, bus_idx: usize, _sample_index: usize) -> f32 {
+        let bus = &self.buses[bus_idx];
+        if bus.sources.is_empty() { return 0.0; }
+        let mut mixed = 0.0f32;
+        for source in &bus.sources {
+            if let Some(ref clip) = source.clip {
+                let attenuation = source.calculate_attenuation(self.listener_position);
+                mixed += attenuation * source.volume * bus.volume * self.master_volume;
+            }
+        }
+        mixed.clamp(-1.0, 1.0)
+    }
+
+    pub fn is_initialized(&self) -> bool { self.initialized }
 }
 
-impl Default for AudioEngine {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+impl Default for AudioEngine { fn default() -> Self { Self::new() } }
 
 #[cfg(test)]
 mod tests {
@@ -55,5 +177,34 @@ mod tests {
     fn test_default_volume() {
         let engine = AudioEngine::new();
         assert!((engine.master_volume - 1.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_sine_wave() {
+        let clip = AudioClip::sine_wave(440.0, 1.0, 44100);
+        assert_eq!(clip.sample_rate, 44100);
+        assert!((clip.duration - 1.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_spatial_attenuation() {
+        let source = SpatialAudioSource::new();
+        let atten = source.calculate_attenuation([100.0, 0.0, 0.0]);
+        assert!((atten - 0.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_doppler_shift() {
+        let source = SpatialAudioSource::new();
+        source.velocity = [10.0, 0.0, 0.0];
+        let pitch = source.doppler_pitch([0.0; 3], [0.0; 3], 343.0);
+        assert!(pitch > 0.0);
+    }
+
+    #[test]
+    fn test_audio_bus_system() {
+        let mut engine = AudioEngine::new();
+        engine.set_bus_volume(AudioBus::Music, 0.5);
+        assert!((engine.buses[AudioBus::Music.index()].volume - 0.5).abs() < f32::EPSILON);
     }
 }
