@@ -278,6 +278,9 @@ impl Vm {
             }
         }
         // Check global scope
+        if let Some(val) = self.global_locals.get(&format!("_{}", idx)) {
+            return Ok(val.clone());
+        }
         Ok(Value::Null)
     }
 
@@ -293,9 +296,7 @@ impl Vm {
             return Ok(());
         }
         // Global scope fallback
-        self.global_locals
-            .entry(format!("_{}", idx))
-            .or_insert(Value::Null);
+        self.global_locals.insert(format!("_{}", idx), val);
         Ok(())
     }
 
@@ -431,14 +432,12 @@ impl Vm {
             }
             1 => { // sin
                 let val = self.value_stack.pop().unwrap_or(Value::Float(0.0));
-                if let Value::Float(f) | Value::Int(i) = val {
-                    let f = match val {
-                        Value::Float(v) => v,
-                        Value::Int(v) => v as f64,
-                        _ => 0.0,
-                    };
-                    self.value_stack.push(Value::Float(f.sin()));
-                }
+                let f = match val {
+                    Value::Float(v) => v,
+                    Value::Int(v) => v as f64,
+                    _ => 0.0,
+                };
+                self.value_stack.push(Value::Float(f.sin()));
             }
             2 => { // cos
                 let val = self.value_stack.pop().unwrap_or(Value::Float(0.0));
@@ -488,6 +487,9 @@ impl Vm {
                 print!("{}", value_display(&val));
                 self.value_stack.push(Value::Null);
             }
+            8 => { // pop — discard top of stack
+                self.value_stack.pop().ok_or(VmError::StackUnderflow)?;
+            }
             _ => {}
         }
         Ok(())
@@ -506,39 +508,39 @@ impl Vm {
     }
 
     pub fn resume_coroutine(&mut self, idx: usize) -> Result<Option<Value>, VmError> {
-        let coro = self.coroutines.get_mut(idx)
-            .ok_or(VmError::CoroutineNotFound)?;
+        let (coro_ip, coro_stack, coro_frames) = {
+            let coro = self.coroutines.get_mut(idx)
+                .ok_or(VmError::CoroutineNotFound)?;
+            if coro.completed {
+                return Ok(Some(Value::Null));
+            }
+            (coro.ip, std::mem::take(&mut coro.stack), std::mem::take(&mut coro.frames))
+        };
 
-        if coro.completed {
-            return Ok(Some(Value::Null));
-        }
-
-        // Swap state
         let saved_ip = self.ip;
         let saved_stack = std::mem::take(&mut self.value_stack);
         let saved_frames = std::mem::take(&mut self.call_stack);
 
-        self.ip = coro.ip;
-        self.value_stack = std::mem::take(&mut coro.stack);
-        self.call_stack = std::mem::take(&mut coro.frames);
+        self.ip = coro_ip;
+        self.value_stack = coro_stack;
+        self.call_stack = coro_frames;
 
-        // Run until yield or halt
-        self.run_frame()?;
+        let result = self.run_frame();
 
-        // Save state back
-        coro.ip = self.ip;
-        coro.stack = std::mem::take(&mut self.value_stack);
-        coro.frames = std::mem::take(&mut self.call_stack);
+        if let Some(coro) = self.coroutines.get_mut(idx) {
+            coro.ip = self.ip;
+            coro.stack = std::mem::take(&mut self.value_stack);
+            coro.frames = std::mem::take(&mut self.call_stack);
+            if self.should_halt {
+                coro.completed = true;
+            }
+        }
 
-        // Restore
         self.ip = saved_ip;
         self.value_stack = saved_stack;
         self.call_stack = saved_frames;
 
-        if self.should_halt {
-            coro.completed = true;
-        }
-
+        result?;
         Ok(Some(Value::Null))
     }
 
@@ -889,9 +891,13 @@ mod tests {
 
     #[test]
     fn test_stack_underflow() {
-        let result = run_source("pop();");
-        // pop isn't valid NexScript, so it'll be treated as unknown function
-        assert!(true);
+        // Direct bytecode: push one value, pop it, pop again on empty stack
+        let mut vm = Vm::new(
+            vec![Bytecode::PushInt(42), Bytecode::Pop, Bytecode::Pop, Bytecode::Halt],
+            vec![],
+        );
+        let result = vm.run();
+        assert!(matches!(result, Err(VmError::StackUnderflow)));
     }
 
     #[test]

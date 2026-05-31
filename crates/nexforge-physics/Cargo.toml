@@ -7,4 +7,3 @@ description = "Physics engine built on rapier3d with custom BVH broad-phase"
 [dependencies]
 rapier3d = { workspace = true }
 thiserror = { workspace = true }
-nexforge-ecs = { path = "../nexforge-ecs" }

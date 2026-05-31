@@ -9,6 +9,7 @@ thiserror = { workspace = true }
 serde = { workspace = true }
 bincode = { workspace = true }
 rand = "0.8"
+log = { workspace = true }
 
 [dev-dependencies]
 criterion = "0.5"

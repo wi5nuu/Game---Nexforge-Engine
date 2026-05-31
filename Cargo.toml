@@ -10,6 +10,9 @@ members = [
     "crates/nexforge-net",
     "crates/nexforge-core",
     "game",
+    "tools/dev-console",
+    "tools/profiler",
+    "tools/nexscript-lsp",
 ]
 
 [workspace.dependencies]

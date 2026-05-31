@@ -14,7 +14,7 @@ pub enum AstNode {
     ComponentDef {
         name: String,
         fields: Vec<FieldDecl>,
-        methods: Vec<FnDef>,
+        methods: Vec<AstNode>,
     },
     EventDef {
         name: String,

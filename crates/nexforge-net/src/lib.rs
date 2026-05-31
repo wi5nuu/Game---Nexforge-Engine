@@ -211,8 +211,8 @@ impl NetEngine {
 
     pub fn send_input(&mut self, input: PlayerInput) -> Result<(), NetError> {
         if !self.initialized { return Err(NetError::NotConnected); }
-        self.rollback.input_buffer.push(input);
         let _data = input.serialize()?;
+        self.rollback.input_buffer.push(input);
         // Send over WebRTC/UDP — placeholder
         Ok(())
     }

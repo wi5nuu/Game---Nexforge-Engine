@@ -15,4 +15,6 @@ nexforge-physics = { path = "../nexforge-physics" }
 nexforge-audio = { path = "../nexforge-audio" }
 nexforge-ai = { path = "../nexforge-ai" }
 nexforge-net = { path = "../nexforge-net" }
+nexforge-dev-console = { path = "../../tools/dev-console" }
+nexforge-profiler = { path = "../../tools/profiler" }
 winit = { workspace = true }

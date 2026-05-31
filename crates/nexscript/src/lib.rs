@@ -6,6 +6,7 @@ pub mod ast;
 pub mod compiler;
 pub mod vm;
 pub mod runtime;
+pub mod hot_reload;
 
 pub use lexer::Lexer;
 pub use parser::Parser;
@@ -20,3 +21,4 @@ pub use runtime::ScriptRuntime;
 pub use runtime::InputState;
 pub use runtime::ScriptEvent;
 pub use runtime::ScriptContext;
+pub use runtime::EntityId;

@@ -1,5 +1,6 @@
 #![deny(clippy::all)]
 
+use cpal::traits::HostTrait;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -122,8 +123,19 @@ impl AudioEngine {
     }
 
     pub fn initialize(&mut self) -> Result<(), AudioError> {
-        self.initialized = true;
-        Ok(())
+        let host = cpal::default_host();
+        match host.default_output_device() {
+            Some(_device) => {
+                log::info!("[Audio] Output device found");
+                self.initialized = true;
+                Ok(())
+            }
+            None => {
+                log::warn!("[Audio] No output device found — running silent");
+                self.initialized = true;
+                Ok(())
+            }
+        }
     }
 
     pub fn play(&mut self, clip: AudioClip, bus: AudioBus) {
@@ -195,7 +207,7 @@ mod tests {
 
     #[test]
     fn test_doppler_shift() {
-        let source = SpatialAudioSource::new();
+        let mut source = SpatialAudioSource::new();
         source.velocity = [10.0, 0.0, 0.0];
         let pitch = source.doppler_pitch([0.0; 3], [0.0; 3], 343.0);
         assert!(pitch > 0.0);

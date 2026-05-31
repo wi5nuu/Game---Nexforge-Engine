@@ -1,0 +1,8 @@
+[package]
+name = "nexforge-dev-console"
+version = "0.1.0"
+edition = "2021"
+description = "In-game developer console (F12) for Nexforge Engine"
+
+[dependencies]
+thiserror = { workspace = true }

@@ -175,14 +175,11 @@ impl Parser {
                         fields,
                     });
                 }
-                Token::Identifier(_) => {
+                Token::Identifier(name) => {
                     let name = match self.peek() {
                         Token::Identifier(ref s) if s.starts_with("on_") => {
                             self.advance();
-                            match name {
-                                Token::Identifier(s) => s,
-                                _ => unreachable!(),
-                            }
+                            name
                         }
                         _ => {
                             return Err(ParseError::UnexpectedToken(

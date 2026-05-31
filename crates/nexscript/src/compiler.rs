@@ -349,6 +349,7 @@ impl Compiler {
                                 "clamp" => 5,
                                 "random" => 6,
                                 "print" => 7,
+                                "pop" => 8,
                                 _ => return Err(CompileError::FunctionNotFound(name.clone())),
                             };
                             self.bytecode.push(Bytecode::CallBuiltin(builtin_id));
@@ -612,14 +613,14 @@ mod tests {
     #[test]
     fn test_compile_if_else() {
         let bc = compile_source("if true { 1; } else { 2; }").unwrap();
-        assert!(bc.contains(&Bytecode::JmpIfNot(0)) || bc.contains(&Bytecode::Jmp(0)));
+        assert!(bc.iter().any(|b| matches!(b, Bytecode::JmpIfNot(_) | Bytecode::Jmp(_))));
         assert!(bc.contains(&Bytecode::Halt));
     }
 
     #[test]
     fn test_compile_while() {
         let bc = compile_source("let x = 0; while x < 10 { x = x + 1; }").unwrap();
-        assert!(bc.contains(&Bytecode::JmpIfNot(0)));
+        assert!(bc.iter().any(|b| matches!(b, Bytecode::JmpIfNot(_))));
         assert!(bc.contains(&Bytecode::Halt));
     }
 

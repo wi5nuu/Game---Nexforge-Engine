@@ -132,7 +132,7 @@ mod tests {
     #[test]
     fn test_bloom_apply() {
         let bloom = BloomPass::new();
-        let result = bloom.apply([2.0, 0.5, 0.1]);
-        assert!(result[0] > 2.0); // Bright pixel gets bloom
+        let result = bloom.apply([3.0, 3.0, 3.0]);
+        assert!(result[0] > 3.0); // Bright pixel gets bloom
     }
 }

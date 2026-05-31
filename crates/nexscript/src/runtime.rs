@@ -190,7 +190,7 @@ impl ScriptRuntime {
             if !bytecode.is_empty() {
                 self.vm = Vm::new(bytecode.clone(), self.string_pool.clone());
                 match event {
-                    ScriptEvent::Update(dt) => self.context.global_vars.insert("dt".to_string(), Value::Float(*dt as f64)),
+                    ScriptEvent::Update(dt) => { self.context.global_vars.insert("dt".to_string(), Value::Float(*dt as f64)); }
                     ScriptEvent::Collision(other) => { self.context.global_vars.insert("other".to_string(), Value::Int(*other as i32)); }
                     _ => {}
                 }

@@ -202,13 +202,15 @@ impl World {
         let row = archetype.entities.len();
         archetype.entities.push(entity);
         for (cid, data) in &components {
-            let col = archetype
+            let col = match archetype
                 .columns
                 .iter_mut()
-                .position(|c| c.component_id == *cid)
-                .unwrap();
+                .position(|c| c.component_id == *cid) {
+                    Some(c) => c,
+                    None => continue,
+                };
             let info = self.registry.info(*cid);
-            let ptr = &*data as *const &dyn Any as *const u8;
+            let ptr = &*data as *const dyn Any as *const u8;
             // Push raw bytes
             unsafe {
                 let slice = std::slice::from_raw_parts(ptr, info.size);
@@ -263,11 +265,13 @@ impl World {
             let entity = self.archetypes[arch_id].entities[row];
             let mut component_data = Vec::new();
             for &ocid in &old_key {
-                let col = self.archetypes[arch_id]
+                let col = match self.archetypes[arch_id]
                     .columns
                     .iter()
-                    .position(|c| c.component_id == ocid)
-                    .unwrap();
+                    .position(|c| c.component_id == ocid) {
+                        Some(c) => c,
+                        None => continue,
+                    };
                 let info = self.registry.info(ocid);
                 let start = row * info.size;
                 let end = start + info.size;
@@ -281,21 +285,25 @@ impl World {
             let new_row = new_arch.entities.len();
             new_arch.entities.push(entity);
             for (ocid, bytes, _size) in &component_data {
-                let col = new_arch
+                let col = match new_arch
                     .columns
                     .iter()
-                    .position(|c| c.component_id == *ocid)
-                    .unwrap();
+                    .position(|c| c.component_id == *ocid) {
+                        Some(c) => c,
+                        None => continue,
+                    };
                 new_arch.columns[col].data.extend_from_slice(bytes);
             }
             // Add new component column
-            let col = new_arch
+            let col = match new_arch
                 .columns
                 .iter()
-                .position(|c| c.component_id == cid)
-                .unwrap();
+                .position(|c| c.component_id == cid) {
+                    Some(c) => c,
+                    None => return,
+                };
             let info = self.registry.info(cid);
-            let ptr = &*data as *const &dyn Any as *const u8;
+            let ptr = &*data as *const dyn Any as *const u8;
             unsafe {
                 let bytes = std::slice::from_raw_parts(ptr, info.size);
                 new_arch.columns[col].data.extend_from_slice(bytes);
@@ -320,11 +328,13 @@ impl World {
             let entity = self.archetypes[arch_id].entities[row];
             let mut component_data = Vec::new();
             for &ocid in &new_key {
-                let col = self.archetypes[arch_id]
+                let col = match self.archetypes[arch_id]
                     .columns
                     .iter()
-                    .position(|c| c.component_id == ocid)
-                    .unwrap();
+                    .position(|c| c.component_id == ocid) {
+                        Some(c) => c,
+                        None => continue,
+                    };
                 let info = self.registry.info(ocid);
                 let start = row * info.size;
                 let end = start + info.size;
@@ -336,11 +346,13 @@ impl World {
             let new_row = new_arch.entities.len();
             new_arch.entities.push(entity);
             for (ocid, bytes) in &component_data {
-                let col = new_arch
+                let col = match new_arch
                     .columns
                     .iter()
-                    .position(|c| c.component_id == *ocid)
-                    .unwrap();
+                    .position(|c| c.component_id == *ocid) {
+                        Some(c) => c,
+                        None => continue,
+                    };
                 new_arch.columns[col].data.extend_from_slice(bytes);
             }
             self.entity_to_archetype.insert(entity, (new_arch_id, new_row));
@@ -357,12 +369,7 @@ impl World {
             }
         }
         let id = self.archetypes.len();
-        let mut arch = Archetype::new(id, sorted.clone(), &self.registry);
-        // Create columns for each component type
-        for &cid in &sorted {
-            let info = self.registry.info(cid);
-            arch.columns.push(Column::new(cid, info.size));
-        }
+        let arch = Archetype::new(id, sorted.clone(), &self.registry);
         self.archetypes.push(arch);
         id
     }
@@ -382,7 +389,7 @@ impl World {
         let arch = &self.archetypes[*arch_id];
         let cid = self.registry.resolve::<T>();
         let col = arch.columns.iter().find(|c| c.component_id == cid)?;
-        Some(col.get::<T>(row))
+        Some(col.get::<T>(*row))
     }
 
     pub fn get_component_mut<T: Component>(&mut self, entity: Entity) -> Option<&mut T> {
@@ -390,11 +397,19 @@ impl World {
         let arch = &mut self.archetypes[*arch_id];
         let cid = self.registry.resolve::<T>();
         let col = arch.columns.iter_mut().find(|c| c.component_id == cid)?;
-        Some(col.get_mut::<T>(row))
+        Some(col.get_mut::<T>(*row))
     }
 
     pub fn has_component<T: Component>(&self, entity: Entity) -> bool {
-        self.get_component::<T>(entity).is_some()
+        let cid = match self.registry.id_of::<T>() {
+            Some(cid) => cid,
+            None => return false,
+        };
+        let (_arch_id, _row) = match self.entity_to_archetype.get(&entity) {
+            Some(v) => v,
+            None => return false,
+        };
+        self.archetypes[*_arch_id].columns.iter().any(|c| c.component_id == cid)
     }
 
     pub fn entity_count(&self) -> usize {
@@ -418,7 +433,8 @@ impl World {
     }
 
     pub fn flush(&mut self) {
-        self.command_buffer.apply(self);
+        let mut cmd = std::mem::take(&mut self.command_buffer);
+        cmd.apply(self);
     }
 }
 

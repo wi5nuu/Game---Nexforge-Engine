@@ -1,3 +1,5 @@
+#![deny(clippy::all)]
+
 use nexscript::ScriptRuntime;
 
 pub struct EnemySystem {

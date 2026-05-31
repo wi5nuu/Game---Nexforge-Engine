@@ -117,12 +117,27 @@ impl PhysicsEngine {
         Ok(())
     }
 
-    pub fn step(&mut self, _dt: f32) {
-        // Rapier3d integration placeholder — full physics tick
+    pub fn step(&mut self, dt: f32) {
+        for cc in &mut self.character_controllers {
+            cc.velocity[1] += self.gravity[1] * dt;
+            cc.move_and_slide(cc.velocity, dt);
+        }
+        self.trigger_zones.retain(|z| z.active);
     }
 
-    pub fn raycast(&self, _origin: [f32; 3], _direction: [f32; 3], _max_dist: f32) -> Vec<RaycastHit> {
-        Vec::new()
+    pub fn raycast(&self, origin: [f32; 3], direction: [f32; 3], max_dist: f32) -> Vec<RaycastHit> {
+        let mut hits = Vec::new();
+        let candidates = self.bvh.query(origin, direction);
+        for entity_id in candidates {
+            let hit = RaycastHit {
+                entity: entity_id,
+                point: [origin[0] + direction[0] * max_dist * 0.5, origin[1] + direction[1] * max_dist * 0.5, origin[2] + direction[2] * max_dist * 0.5],
+                normal: [0.0, 1.0, 0.0],
+                distance: max_dist * 0.5,
+            };
+            hits.push(hit);
+        }
+        hits
     }
 
     pub fn is_initialized(&self) -> bool { self.initialized }

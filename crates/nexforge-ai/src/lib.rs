@@ -214,6 +214,9 @@ impl NavMesh {
     }
 
     pub fn find_path(&self, start: usize, goal: usize) -> Result<Vec<usize>, AiError> {
+        if start >= self.nodes.len() || goal >= self.nodes.len() {
+            return Err(AiError::PathNotFound);
+        }
         let mut open = std::collections::BinaryHeap::<AStarNode>::new();
         let mut g_score = vec![f32::MAX; self.nodes.len()];
         let mut came_from = vec![usize::MAX; self.nodes.len()];
@@ -371,7 +374,7 @@ mod tests {
     use super::*;
 
     fn always_succeed() -> Box<dyn BtNode> { Box::new(Action::new("_success", 1.0)) }
-    fn always_fail() -> Box<dyn BtNode> { Box::new(Sequence::new(vec![])) }
+    fn always_fail() -> Box<dyn BtNode> { Box::new(Selector::new(vec![])) }
 
     #[test]
     fn test_ai_init() {

@@ -1,3 +1,5 @@
+#![deny(clippy::all)]
+
 use nexscript::{ScriptRuntime, InputState};
 
 pub struct PlayerSystem {

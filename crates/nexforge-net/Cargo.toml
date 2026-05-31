@@ -8,3 +8,4 @@ description = "Rollback netcode with GGPO-inspired deterministic simulation"
 thiserror = { workspace = true }
 bincode = { workspace = true }
 serde = { workspace = true }
+bytemuck = "1"

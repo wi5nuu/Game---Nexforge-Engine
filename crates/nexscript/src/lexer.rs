@@ -179,10 +179,14 @@ impl Lexer {
         let mut is_float = false;
         while let Some(ch) = self.peek() {
             if ch.is_ascii_digit() {
-                s.push(self.advance().unwrap());
+                if let Some(c) = self.advance() { s.push(c); }
             } else if ch == '.' {
+                // Peek ahead: if next char is also '.', it's ".." (range), not a float
+                if self.source.get(self.position + 1) == Some(&'.') {
+                    break;
+                }
                 is_float = true;
-                s.push(self.advance().unwrap());
+                if let Some(c) = self.advance() { s.push(c); }
             } else {
                 break;
             }
@@ -199,7 +203,7 @@ impl Lexer {
         s.push(first);
         while let Some(ch) = self.peek() {
             if ch.is_alphanumeric() || ch == '_' {
-                s.push(self.advance().unwrap());
+                if let Some(c) = self.advance() { s.push(c); }
             } else {
                 break;
             }

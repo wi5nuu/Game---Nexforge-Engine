@@ -6,4 +6,3 @@ description = "AI system with Behavior Trees, A* NavMesh pathfinding, and Utilit
 
 [dependencies]
 thiserror = { workspace = true }
-nexforge-ecs = { path = "../nexforge-ecs" }
