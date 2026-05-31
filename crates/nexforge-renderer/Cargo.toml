@@ -10,3 +10,4 @@ winit = { workspace = true }
 thiserror = { workspace = true }
 log = { workspace = true }
 nexforge-ecs = { path = "../nexforge-ecs" }
+pollster = "0.3"

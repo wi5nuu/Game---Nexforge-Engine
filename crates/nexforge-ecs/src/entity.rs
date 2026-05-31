@@ -50,6 +50,15 @@ mod tests {
     }
 
     #[test]
+    fn test_entity_unique_indices() {
+        let mut ids = std::collections::HashSet::new();
+        for _ in 0..1000 {
+            ids.insert(Entity::new());
+        }
+        assert_eq!(ids.len(), 1000);
+    }
+
+    #[test]
     fn test_null_entity() {
         let null = Entity::null();
         assert!(null.is_null());

@@ -15,6 +15,11 @@ fn main() {
         }
     }
 
+    log::info!(
+        "Engine ready. Frame time: {:.2}ms",
+        engine.frame_time() * 1000.0
+    );
+
     if let Err(e) = engine.run() {
         log::error!("Engine runtime error: {}", e);
     }
