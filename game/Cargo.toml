@@ -1,0 +1,18 @@
+[package]
+name = "nexforge-game"
+version = "0.1.0"
+edition = "2021"
+description = "Nexforge Engine — FPS/TPS game entry point"
+
+[dependencies]
+log = { workspace = true }
+env_logger = { workspace = true }
+nexforge-core = { path = "../crates/nexforge-core" }
+nexscript = { path = "../crates/nexscript" }
+nexforge-ecs = { path = "../crates/nexforge-ecs" }
+nexforge-renderer = { path = "../crates/nexforge-renderer" }
+nexforge-physics = { path = "../crates/nexforge-physics" }
+nexforge-audio = { path = "../crates/nexforge-audio" }
+nexforge-ai = { path = "../crates/nexforge-ai" }
+nexforge-net = { path = "../crates/nexforge-net" }
+winit = { workspace = true }

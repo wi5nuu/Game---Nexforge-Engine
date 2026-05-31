@@ -1,0 +1,17 @@
+[package]
+name = "nexscript"
+version = "0.1.0"
+edition = "2021"
+description = "NexScript scripting language — lexer, parser, bytecode compiler, and VM"
+
+[dependencies]
+thiserror = { workspace = true }
+serde = { workspace = true }
+bincode = { workspace = true }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "vm_bench"
+harness = false

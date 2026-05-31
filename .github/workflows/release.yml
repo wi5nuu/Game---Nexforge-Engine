@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            suffix: ''
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            suffix: .exe
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            suffix: ''
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - run: cargo build --workspace --release --target ${{ matrix.target }}
+      - name: Package artifacts
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/nexforge-game${{ matrix.suffix }} dist/
+          cp target/${{ matrix.target }}/release/*.wasm dist/ 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nexforge-engine-${{ matrix.target }}
+          path: dist/
+
+  github_release:
+    needs: [release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: nexforge-engine-*
+      - uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true

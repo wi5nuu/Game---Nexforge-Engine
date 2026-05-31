@@ -1,0 +1,24 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/nexscript",
+    "crates/nexforge-ecs",
+    "crates/nexforge-renderer",
+    "crates/nexforge-physics",
+    "crates/nexforge-audio",
+    "crates/nexforge-ai",
+    "crates/nexforge-net",
+    "crates/nexforge-core",
+    "game",
+]
+
+[workspace.dependencies]
+thiserror = "1"
+serde = { version = "1", features = ["derive"] }
+bincode = "1"
+log = "0.4"
+env_logger = "0.10"
+wgpu = "0.19"
+winit = "0.29"
+rapier3d = "0.19"
+cpal = "0.15"

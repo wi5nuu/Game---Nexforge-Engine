@@ -1,0 +1,25 @@
+entity Player {
+    component Transform
+    component RigidBody
+    component Camera { fov: 90.0 }
+    component Health { max: 100, current: 100 }
+    component Weapon
+
+    on_update(dt: float) {
+        let input = Input.get()
+        let vel = vec3(input.horizontal, 0, input.vertical) * 6.0
+        self.RigidBody.set_velocity(vel)
+        self.Camera.yaw += input.mouse_x * 0.002
+        self.Camera.pitch = clamp(self.Camera.pitch + input.mouse_y * 0.002, -1.5, 1.5)
+        if input.jump && self.RigidBody.is_grounded() {
+            self.RigidBody.apply_impulse(vec3(0, 8, 0))
+        }
+        if input.shoot {
+            self.Weapon.fire()
+        }
+    }
+
+    on_death() {
+        GameManager.trigger_respawn(self)
+    }
+}

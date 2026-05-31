@@ -1,0 +1,68 @@
+entity Enemy {
+    component Transform
+    component RigidBody
+    component Health { max: 50, current: 50 }
+    component AIState { current: "patrol" }
+
+    state patrol_timer: float = 0.0
+    state patrol_target: vec3 = vec3(0, 0, 0)
+    state alert_radius: float = 15.0
+
+    on_update(dt: float) {
+        let player = find_entity("player")
+        if player == null { return }
+
+        let dist = (self.Transform.position - player.Transform.position).length()
+
+        if self.AIState.current == "patrol" {
+            handle_patrol(dt, player, dist)
+        } else if self.AIState.current == "alert" {
+            handle_alert(dt, player, dist)
+        } else if self.AIState.current == "attack" {
+            handle_attack(dt, player, dist)
+        }
+    }
+
+    fn handle_patrol(dt: float, player: entity, dist: float) {
+        self.patrol_timer -= dt
+        if self.patrol_timer <= 0 {
+            self.patrol_target = random_navmesh_point()
+            self.patrol_timer = 4.0
+        }
+        move_towards(self.patrol_target, 3.0)
+        if dist < self.alert_radius {
+            self.AIState.current = "alert"
+        }
+    }
+
+    fn handle_alert(dt: float, player: entity, dist: float) {
+        move_towards(player.Transform.position, 4.5)
+        if dist < 8.0 {
+            self.AIState.current = "attack"
+        } else if dist > 20.0 {
+            self.AIState.current = "patrol"
+        }
+    }
+
+    fn handle_attack(dt: float, player: entity, dist: float) {
+        let cover = find_nearest_cover(self.Transform.position, player.Transform.position)
+        if cover != null {
+            move_towards(cover, 5.0)
+        }
+        self.Transform.look_at(player.Transform.position)
+        if dist < 15.0 {
+            let spread = 0.05
+            let dir = (player.Transform.position - self.Transform.position).normalize()
+            dir += vec3(random_range(-spread, spread), random_range(-spread, spread), random_range(-spread, spread))
+            fire_projectile(self.Transform.position, dir, 20.0)
+        }
+        if dist > 25.0 {
+            self.AIState.current = "alert"
+        }
+    }
+
+    on_death() {
+        spawn_loot(self.Transform.position)
+        GameManager.add_score(100)
+    }
+}

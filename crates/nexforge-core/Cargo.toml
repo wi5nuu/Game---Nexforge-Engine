@@ -1,0 +1,18 @@
+[package]
+name = "nexforge-core"
+version = "0.1.0"
+edition = "2021"
+description = "Nexforge Engine entry point and platform abstraction layer"
+
+[dependencies]
+log = { workspace = true }
+env_logger = { workspace = true }
+thiserror = { workspace = true }
+nexscript = { path = "../nexscript" }
+nexforge-ecs = { path = "../nexforge-ecs" }
+nexforge-renderer = { path = "../nexforge-renderer" }
+nexforge-physics = { path = "../nexforge-physics" }
+nexforge-audio = { path = "../nexforge-audio" }
+nexforge-ai = { path = "../nexforge-ai" }
+nexforge-net = { path = "../nexforge-net" }
+winit = { workspace = true }

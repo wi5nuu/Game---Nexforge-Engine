@@ -1,0 +1,11 @@
+/target
+/dist
+*.o
+*.a
+*.so
+*.dll
+*.exe
+*.wasm
+.env
+.DS_Store
+Thumbs.db

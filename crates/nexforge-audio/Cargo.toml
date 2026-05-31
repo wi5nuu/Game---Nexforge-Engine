@@ -1,0 +1,9 @@
+[package]
+name = "nexforge-audio"
+version = "0.1.0"
+edition = "2021"
+description = "Spatial 3D audio system using cpal with HRTF support"
+
+[dependencies]
+cpal = { workspace = true }
+thiserror = { workspace = true }

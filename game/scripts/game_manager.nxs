@@ -1,0 +1,48 @@
+entity GameManager {
+    component Transform
+    state score: int = 0
+    state round: int = 1
+    state enemies_alive: int = 0
+    state is_game_over: bool = false
+
+    on_spawn() {
+        start_round()
+    }
+
+    fn start_round() {
+        self.max_enemies = 5 + (self.round - 1) * 2
+        self.enemies_alive = self.max_enemies
+        for i in 0..self.max_enemies {
+            spawn_enemy(choose_spawn_point())
+        }
+    }
+
+    fn add_score(points: int) {
+        self.score += points
+        self.enemies_alive -= 1
+        if self.enemies_alive <= 0 {
+            self.round += 1
+            start_round()
+        }
+    }
+
+    fn trigger_respawn(player: entity, delay: float) {
+        await wait(delay)
+        let spawn_point = find_spawn_point("player")
+        player.Transform.position = spawn_point
+        player.Health.current = player.Health.max
+    }
+
+    on_update(dt: float) {
+        if self.is_game_over { return }
+        let players_alive = 0
+        for p in entities_with<Player, Health> {
+            if p.Health.is_alive() {
+                players_alive += 1
+            }
+        }
+        if players_alive <= 0 {
+            self.is_game_over = true
+        }
+    }
+}

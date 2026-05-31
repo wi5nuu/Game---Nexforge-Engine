@@ -1,0 +1,9 @@
+[package]
+name = "nexforge-ai"
+version = "0.1.0"
+edition = "2021"
+description = "AI system with Behavior Trees, A* NavMesh pathfinding, and Utility AI"
+
+[dependencies]
+thiserror = { workspace = true }
+nexforge-ecs = { path = "../nexforge-ecs" }

@@ -1,0 +1,12 @@
+[package]
+name = "nexforge-renderer"
+version = "0.1.0"
+edition = "2021"
+description = "wgpu-based deferred rendering pipeline with PBR, shadow mapping, and post-processing"
+
+[dependencies]
+wgpu = { workspace = true }
+winit = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+nexforge-ecs = { path = "../nexforge-ecs" }
