@@ -1,7 +1,6 @@
 #![deny(clippy::all)]
 
 use nexforge_core::{Engine, EngineMode};
-use nexforge_renderer::camera::Camera;
 use nexscript::InputState;
 use winit::event::{Event, WindowEvent, ElementState};
 use winit::event_loop::ControlFlow;
