@@ -196,6 +196,8 @@ pub struct NavMesh {
 impl NavMesh {
     pub fn new() -> Self { Self { nodes: Vec::new(), neighbors: Vec::new(), triangle_indices: Vec::new() } }
 
+    pub fn has_node(&self, idx: usize) -> bool { idx < self.nodes.len() }
+
     pub fn remove_node(&mut self, idx: usize) -> bool {
         if idx >= self.nodes.len() { return false; }
         self.nodes.remove(idx);
@@ -220,6 +222,10 @@ impl NavMesh {
         self.nodes.push(NavNode { x, y, z, idx });
         self.neighbors.push(Vec::new());
         idx
+    }
+
+    pub fn has_edge(&self, a: usize, b: usize) -> bool {
+        if a < self.neighbors.len() { self.neighbors[a].contains(&b) } else { false }
     }
 
     pub fn add_edge(&mut self, a: usize, b: usize) {
@@ -271,6 +277,12 @@ impl NavMesh {
         let na = &self.nodes[a]; let nb = &self.nodes[b];
         let dx = na.x - nb.x; let dy = na.y - nb.y; let dz = na.z - nb.z;
         (dx * dx + dy * dy + dz * dz).sqrt()
+    }
+
+    pub fn clear_nodes(&mut self) {
+        self.nodes.clear();
+        self.neighbors.clear();
+        self.triangle_indices.clear();
     }
 
     pub fn node_count(&self) -> usize {
@@ -599,6 +611,32 @@ mod tests {
         assert_eq!(mesh.node_count(), 1);
         mesh.add_node(4.0, 5.0, 6.0);
         assert_eq!(mesh.node_count(), 2);
+    }
+
+    #[test]
+    fn test_navmesh_clear_nodes() {
+        let mut mesh = NavMesh::new();
+        mesh.add_node(0.0, 0.0, 0.0);
+        mesh.add_node(1.0, 0.0, 0.0);
+        assert_eq!(mesh.node_count(), 2);
+        mesh.clear_nodes();
+        assert_eq!(mesh.node_count(), 0);
+    }
+
+    #[test]
+    fn test_navmesh_has_node() {
+        let mesh = NavMesh::new();
+        assert!(!mesh.has_node(0));
+    }
+
+    #[test]
+    fn test_navmesh_has_edge() {
+        let mut mesh = NavMesh::new();
+        let n0 = mesh.add_node(0.0, 0.0, 0.0);
+        let n1 = mesh.add_node(1.0, 0.0, 0.0);
+        assert!(!mesh.has_edge(n0, n1));
+        mesh.add_edge(n0, n1);
+        assert!(mesh.has_edge(n0, n1));
     }
 
     #[test]
