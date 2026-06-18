@@ -151,6 +151,10 @@ impl AudioEngine {
         self.buses[bus.index()].sources.push(source);
     }
 
+    pub fn set_listener_position(&mut self, pos: [f32; 3]) {
+        self.listener_position = pos;
+    }
+
     pub fn set_bus_volume(&mut self, bus: AudioBus, volume: f32) {
         self.buses[bus.index()].volume = volume.clamp(0.0, 1.0);
     }
