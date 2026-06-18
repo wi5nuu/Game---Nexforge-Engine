@@ -21,9 +21,7 @@ pub struct SystemScheduler {
 
 impl SystemScheduler {
     pub fn new() -> Self {
-        Self {
-            systems: Vec::new(),
-        }
+        Self { systems: Vec::new() }
     }
 
     pub fn add_system<S: System + 'static>(&mut self, system: S) {
@@ -61,8 +59,16 @@ mod tests {
     use super::*;
     use crate::world::World;
 
-    struct Pos { x: f32, y: f32 }
-    struct Vel { x: f32, y: f32 }
+    #[allow(dead_code)]
+    struct Pos {
+        x: f32,
+        y: f32,
+    }
+    #[allow(dead_code)]
+    struct Vel {
+        x: f32,
+        y: f32,
+    }
 
     #[test]
     fn test_system_execution() {

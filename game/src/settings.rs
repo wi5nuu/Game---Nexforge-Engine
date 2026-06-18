@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 pub struct GameSettings {
     pub window_width: u32,
     pub window_height: u32,

@@ -24,12 +24,7 @@ impl Column {
     }
 
     pub fn push<T: Component>(&mut self, value: &T) {
-        let bytes = unsafe {
-            std::slice::from_raw_parts(
-                (value as *const T) as *const u8,
-                std::mem::size_of::<T>(),
-            )
-        };
+        let bytes = unsafe { std::slice::from_raw_parts((value as *const T) as *const u8, std::mem::size_of::<T>()) };
         self.data.extend_from_slice(bytes);
     }
 
@@ -56,6 +51,10 @@ impl Column {
 
     pub fn len(&self) -> usize {
         self.data.len() / self.stride
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 
@@ -92,8 +91,10 @@ impl Archetype {
     }
 }
 
+type SpawnCommand = (Entity, Vec<(ComponentId, Box<dyn Any>)>);
+
 pub struct CommandBuffer {
-    spawns: Vec<(Entity, Vec<(ComponentId, Box<dyn Any>)>)>,
+    spawns: Vec<SpawnCommand>,
     despawns: Vec<Entity>,
     component_adds: Vec<(Entity, ComponentId, Box<dyn Any>)>,
     component_removes: Vec<(Entity, ComponentId)>,
@@ -190,11 +191,7 @@ impl World {
         entity
     }
 
-    pub fn spawn_with_components_raw(
-        &mut self,
-        entity: Entity,
-        components: Vec<(ComponentId, Box<dyn Any>)>,
-    ) {
+    pub fn spawn_with_components_raw(&mut self, entity: Entity, components: Vec<(ComponentId, Box<dyn Any>)>) {
         let mut key: Vec<ComponentId> = components.iter().map(|(id, _)| *id).collect();
         key.sort_by_key(|id| id.0);
         let archetype_id = self.find_or_create_archetype(&key);
@@ -202,15 +199,12 @@ impl World {
         let row = archetype.entities.len();
         archetype.entities.push(entity);
         for (cid, data) in &components {
-            let col = match archetype
-                .columns
-                .iter_mut()
-                .position(|c| c.component_id == *cid) {
-                    Some(c) => c,
-                    None => continue,
-                };
+            let col = match archetype.columns.iter_mut().position(|c| c.component_id == *cid) {
+                Some(c) => c,
+                None => continue,
+            };
             let info = self.registry.info(*cid);
-            let ptr = &*data as *const dyn Any as *const u8;
+            let ptr = data.as_ref() as *const dyn Any as *const u8;
             // Push raw bytes
             unsafe {
                 let slice = std::slice::from_raw_parts(ptr, info.size);
@@ -234,8 +228,7 @@ impl World {
                 for col in &mut archetype.columns {
                     col.swap_remove(row);
                 }
-                self.entity_to_archetype
-                    .insert(last_entity, (arch_id, row));
+                self.entity_to_archetype.insert(last_entity, (arch_id, row));
             } else {
                 for col in &mut archetype.columns {
                     col.data.truncate(col.data.len() - col.stride);
@@ -268,10 +261,11 @@ impl World {
                 let col = match self.archetypes[arch_id]
                     .columns
                     .iter()
-                    .position(|c| c.component_id == ocid) {
-                        Some(c) => c,
-                        None => continue,
-                    };
+                    .position(|c| c.component_id == ocid)
+                {
+                    Some(c) => c,
+                    None => continue,
+                };
                 let info = self.registry.info(ocid);
                 let start = row * info.size;
                 let end = start + info.size;
@@ -285,25 +279,19 @@ impl World {
             let new_row = new_arch.entities.len();
             new_arch.entities.push(entity);
             for (ocid, bytes, _size) in &component_data {
-                let col = match new_arch
-                    .columns
-                    .iter()
-                    .position(|c| c.component_id == *ocid) {
-                        Some(c) => c,
-                        None => continue,
-                    };
+                let col = match new_arch.columns.iter().position(|c| c.component_id == *ocid) {
+                    Some(c) => c,
+                    None => continue,
+                };
                 new_arch.columns[col].data.extend_from_slice(bytes);
             }
             // Add new component column
-            let col = match new_arch
-                .columns
-                .iter()
-                .position(|c| c.component_id == cid) {
-                    Some(c) => c,
-                    None => return,
-                };
+            let col = match new_arch.columns.iter().position(|c| c.component_id == cid) {
+                Some(c) => c,
+                None => return,
+            };
             let info = self.registry.info(cid);
-            let ptr = &*data as *const dyn Any as *const u8;
+            let ptr = data.as_ref() as *const dyn Any as *const u8;
             unsafe {
                 let bytes = std::slice::from_raw_parts(ptr, info.size);
                 new_arch.columns[col].data.extend_from_slice(bytes);
@@ -318,8 +306,7 @@ impl World {
             if !old_key.contains(&cid) {
                 return;
             }
-            let new_key: Vec<ComponentId> =
-                old_key.iter().filter(|&&id| id != cid).copied().collect();
+            let new_key: Vec<ComponentId> = old_key.iter().filter(|&&id| id != cid).copied().collect();
             if new_key.is_empty() {
                 self.despawn_raw(entity);
                 return;
@@ -331,10 +318,11 @@ impl World {
                 let col = match self.archetypes[arch_id]
                     .columns
                     .iter()
-                    .position(|c| c.component_id == ocid) {
-                        Some(c) => c,
-                        None => continue,
-                    };
+                    .position(|c| c.component_id == ocid)
+                {
+                    Some(c) => c,
+                    None => continue,
+                };
                 let info = self.registry.info(ocid);
                 let start = row * info.size;
                 let end = start + info.size;
@@ -346,13 +334,10 @@ impl World {
             let new_row = new_arch.entities.len();
             new_arch.entities.push(entity);
             for (ocid, bytes) in &component_data {
-                let col = match new_arch
-                    .columns
-                    .iter()
-                    .position(|c| c.component_id == *ocid) {
-                        Some(c) => c,
-                        None => continue,
-                    };
+                let col = match new_arch.columns.iter().position(|c| c.component_id == *ocid) {
+                    Some(c) => c,
+                    None => continue,
+                };
                 new_arch.columns[col].data.extend_from_slice(bytes);
             }
             self.entity_to_archetype.insert(entity, (new_arch_id, new_row));
@@ -454,14 +439,20 @@ impl Default for World {
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    struct Pos { x: f32, y: f32 }
-    struct Vel { x: f32, y: f32 }
+    #[allow(dead_code)]
+    struct Pos {
+        x: f32,
+        y: f32,
+    }
+    #[allow(dead_code)]
+    struct Vel {
+        x: f32,
+        y: f32,
+    }
 
     #[test]
     fn test_spawn_entity() {
@@ -510,7 +501,9 @@ mod tests {
         let mut world = World::new();
         let e = Entity::new();
         let cid = world.registry_mut().register::<Pos>();
-        world.command_buffer().spawn(e, vec![(cid, Box::new(Pos { x: 1.0, y: 2.0 }))]);
+        world
+            .command_buffer()
+            .spawn(e, vec![(cid, Box::new(Pos { x: 1.0, y: 2.0 }))]);
         world.flush();
         assert_eq!(world.entity_count(), 1);
     }

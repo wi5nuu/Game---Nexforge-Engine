@@ -31,16 +31,32 @@ pub struct CharacterController {
 
 impl CharacterController {
     pub fn new() -> Self {
-        Self { height: 1.8, radius: 0.4, offset: 0.01, max_slope: 45.0_f32.to_radians(), step_height: 0.3, is_grounded: false, velocity: [0.0; 3] }
+        Self {
+            height: 1.8,
+            radius: 0.4,
+            offset: 0.01,
+            max_slope: 45.0_f32.to_radians(),
+            step_height: 0.3,
+            is_grounded: false,
+            velocity: [0.0; 3],
+        }
     }
 
-    pub fn capsule() -> Self { Self::new() }
+    pub fn capsule() -> Self {
+        Self::new()
+    }
 
-    pub fn set_velocity(&mut self, vel: [f32; 3]) { self.velocity = vel; }
+    pub fn set_velocity(&mut self, vel: [f32; 3]) {
+        self.velocity = vel;
+    }
 
-    pub fn set_height(&mut self, h: f32) { self.height = h; }
+    pub fn set_height(&mut self, h: f32) {
+        self.height = h;
+    }
 
-    pub fn set_radius(&mut self, r: f32) { self.radius = r; }
+    pub fn set_radius(&mut self, r: f32) {
+        self.radius = r;
+    }
 
     pub fn move_and_slide(&mut self, displacement: [f32; 3], _dt: f32) -> [f32; 3] {
         self.velocity = displacement;
@@ -49,8 +65,13 @@ impl CharacterController {
     }
 }
 
-impl Default for CharacterController { fn default() -> Self { Self::new() } }
+impl Default for CharacterController {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
+#[derive(Default)]
 pub struct BvhNode {
     pub min: [f32; 3],
     pub max: [f32; 3],
@@ -61,10 +82,18 @@ pub struct BvhNode {
 
 impl BvhNode {
     pub fn new() -> Self {
-        Self { min: [f32::MAX; 3], max: [f32::MIN; 3], left: None, right: None, entity_id: None }
+        Self {
+            min: [f32::MAX; 3],
+            max: [f32::MIN; 3],
+            left: None,
+            right: None,
+            entity_id: None,
+        }
     }
 
-    pub fn is_leaf(&self) -> bool { self.left.is_none() && self.right.is_none() }
+    pub fn is_leaf(&self) -> bool {
+        self.left.is_none() && self.right.is_none()
+    }
 }
 
 pub struct Bvh {
@@ -72,20 +101,28 @@ pub struct Bvh {
 }
 
 impl Bvh {
-    pub fn new() -> Self { Self { root: None } }
+    pub fn new() -> Self {
+        Self { root: None }
+    }
 
     pub fn build(&mut self, _positions: &[([f32; 3], [f32; 3], u64)]) {
         // Placeholder — full BVH construction in later optimization pass
     }
 
-    pub fn clear(&mut self) { self.root = None; }
+    pub fn clear(&mut self) {
+        self.root = None;
+    }
 
     pub fn query(&self, _origin: [f32; 3], _direction: [f32; 3]) -> Vec<u64> {
         Vec::new()
     }
 }
 
-impl Default for Bvh { fn default() -> Self { Self::new() } }
+impl Default for Bvh {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 pub struct TriggerZone {
     pub position: [f32; 3],
@@ -96,12 +133,21 @@ pub struct TriggerZone {
 
 impl TriggerZone {
     pub fn new(position: [f32; 3], radius: f32) -> Self {
-        Self { position, radius, active: true, entities_inside: Vec::new() }
+        Self {
+            position,
+            radius,
+            active: true,
+            entities_inside: Vec::new(),
+        }
     }
 
-    pub fn set_position(&mut self, pos: [f32; 3]) { self.position = pos; }
+    pub fn set_position(&mut self, pos: [f32; 3]) {
+        self.position = pos;
+    }
 
-    pub fn set_radius(&mut self, r: f32) { self.radius = r; }
+    pub fn set_radius(&mut self, r: f32) {
+        self.radius = r;
+    }
 
     pub fn contains(&self, point: [f32; 3]) -> bool {
         let dx = point[0] - self.position[0];
@@ -121,7 +167,13 @@ pub struct PhysicsEngine {
 
 impl PhysicsEngine {
     pub fn new() -> Self {
-        Self { gravity: [0.0, -9.81, 0.0], bvh: Bvh::new(), trigger_zones: Vec::new(), character_controllers: Vec::new(), initialized: false }
+        Self {
+            gravity: [0.0, -9.81, 0.0],
+            bvh: Bvh::new(),
+            trigger_zones: Vec::new(),
+            character_controllers: Vec::new(),
+            initialized: false,
+        }
     }
 
     pub fn initialize(&mut self) -> Result<(), PhysicsError> {
@@ -159,7 +211,11 @@ impl PhysicsEngine {
         for entity_id in candidates {
             let hit = RaycastHit {
                 entity: entity_id,
-                point: [origin[0] + direction[0] * max_dist * 0.5, origin[1] + direction[1] * max_dist * 0.5, origin[2] + direction[2] * max_dist * 0.5],
+                point: [
+                    origin[0] + direction[0] * max_dist * 0.5,
+                    origin[1] + direction[1] * max_dist * 0.5,
+                    origin[2] + direction[2] * max_dist * 0.5,
+                ],
                 normal: [0.0, 1.0, 0.0],
                 distance: max_dist * 0.5,
             };
@@ -168,10 +224,16 @@ impl PhysicsEngine {
         hits
     }
 
-    pub fn is_initialized(&self) -> bool { self.initialized }
+    pub fn is_initialized(&self) -> bool {
+        self.initialized
+    }
 }
 
-impl Default for PhysicsEngine { fn default() -> Self { Self::new() } }
+impl Default for PhysicsEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -293,7 +355,12 @@ mod tests {
 
     #[test]
     fn test_raycast_hit_defaults() {
-        let hit = RaycastHit { entity: 0, point: [0.0; 3], normal: [1.0, 0.0, 0.0], distance: 10.0 };
+        let hit = RaycastHit {
+            entity: 0,
+            point: [0.0; 3],
+            normal: [1.0, 0.0, 0.0],
+            distance: 10.0,
+        };
         assert_eq!(hit.distance, 10.0);
         assert_eq!(hit.normal, [1.0, 0.0, 0.0]);
     }

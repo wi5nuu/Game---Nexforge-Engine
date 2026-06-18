@@ -68,5 +68,11 @@ fn bench_full_pipeline(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_vm_arithmetic, bench_vm_empty, bench_vm_if_else, bench_full_pipeline);
+criterion_group!(
+    benches,
+    bench_vm_arithmetic,
+    bench_vm_empty,
+    bench_vm_if_else,
+    bench_full_pipeline
+);
 criterion_main!(benches);

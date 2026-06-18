@@ -1,8 +1,8 @@
 #![deny(clippy::all)]
 
 use std::any::TypeId;
-use std::collections::HashMap;
 use std::cell::RefCell;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ComponentId(pub usize);
@@ -72,14 +72,14 @@ impl ComponentRegistry {
     where
         F: FnOnce(&ComponentRegistry) -> R,
     {
-        Self::GLOBAL.with(|r| f(&*r.borrow()))
+        Self::GLOBAL.with(|r| f(&r.borrow()))
     }
 
     pub fn with_global_mut<F, R>(f: F) -> R
     where
         F: FnOnce(&mut ComponentRegistry) -> R,
     {
-        Self::GLOBAL.with(|r| f(&mut *r.borrow_mut()))
+        Self::GLOBAL.with(|r| f(&mut r.borrow_mut()))
     }
 }
 
@@ -93,8 +93,16 @@ impl Default for ComponentRegistry {
 mod tests {
     use super::*;
 
-    struct Pos { x: f32, y: f32 }
-    struct Vel { x: f32, y: f32 }
+    #[allow(dead_code)]
+    struct Pos {
+        x: f32,
+        y: f32,
+    }
+    #[allow(dead_code)]
+    struct Vel {
+        x: f32,
+        y: f32,
+    }
 
     #[test]
     fn test_component_registration() {

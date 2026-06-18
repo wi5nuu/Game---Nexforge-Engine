@@ -26,17 +26,11 @@ pub struct Parser {
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Self {
-            tokens,
-            position: 0,
-        }
+        Self { tokens, position: 0 }
     }
 
     fn peek(&self) -> Token {
-        self.tokens
-            .get(self.position)
-            .cloned()
-            .unwrap_or(Token::Eof)
+        self.tokens.get(self.position).cloned().unwrap_or(Token::Eof)
     }
 
     fn advance(&mut self) -> Token {
@@ -181,13 +175,7 @@ impl Parser {
                             self.advance();
                             name
                         }
-                        _ => {
-                            return Err(ParseError::UnexpectedToken(
-                                self.peek(),
-                                0,
-                                0,
-                            ))
-                        }
+                        _ => return Err(ParseError::UnexpectedToken(self.peek(), 0, 0)),
                     };
                     // Parse event handler
                     self.expect(&Token::OpenParen)?;
@@ -231,13 +219,7 @@ impl Parser {
                         body: body_nodes,
                     });
                 }
-                _ => {
-                    return Err(ParseError::UnexpectedToken(
-                        self.peek(),
-                        0,
-                        0,
-                    ))
-                }
+                _ => return Err(ParseError::UnexpectedToken(self.peek(), 0, 0)),
             }
         }
 
@@ -300,11 +282,7 @@ impl Parser {
             }
         }
 
-        Ok(AstNode::ComponentDef {
-            name,
-            fields,
-            methods,
-        })
+        Ok(AstNode::ComponentDef { name, fields, methods })
     }
 
     fn parse_event_def(&mut self) -> Result<AstNode, ParseError> {
@@ -881,10 +859,7 @@ impl Parser {
                 Ok(expr)
             }
             _ => Err(ParseError::UnexpectedToken(
-                self.tokens
-                    .get(self.position - 1)
-                    .cloned()
-                    .unwrap_or(Token::Eof),
+                self.tokens.get(self.position - 1).cloned().unwrap_or(Token::Eof),
                 0,
                 0,
             )),

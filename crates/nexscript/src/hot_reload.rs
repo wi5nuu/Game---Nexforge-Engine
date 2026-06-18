@@ -50,10 +50,14 @@ impl HotReloader {
 
     pub fn poll(&mut self) -> Vec<FileWatchEvent> {
         let mut events = Vec::new();
-        if !self.enabled { return events; }
+        if !self.enabled {
+            return events;
+        }
 
         for path in &self.watch_paths {
-            if !Path::new(path).exists() { continue; }
+            if !Path::new(path).exists() {
+                continue;
+            }
             if let Ok(metadata) = std::fs::metadata(path) {
                 if let Ok(modified) = metadata.modified() {
                     let last = self.last_modified.get(path).copied();
@@ -78,8 +82,12 @@ impl HotReloader {
         events
     }
 
-    pub fn enable(&mut self) { self.enabled = true; }
-    pub fn disable(&mut self) { self.enabled = false; }
+    pub fn enable(&mut self) {
+        self.enabled = true;
+    }
+    pub fn disable(&mut self) {
+        self.enabled = false;
+    }
 
     pub fn is_modified(&self, path: &str) -> bool {
         if let Ok(metadata) = std::fs::metadata(path) {
@@ -93,8 +101,7 @@ impl HotReloader {
     }
 
     pub fn force_reload(&mut self, path: &str) -> Result<(), String> {
-        let source = std::fs::read_to_string(path)
-            .map_err(|e| format!("Cannot read {}: {}", path, e))?;
+        let source = std::fs::read_to_string(path).map_err(|e| format!("Cannot read {}: {}", path, e))?;
         if let Some(ref rt) = self.runtime {
             let mut runtime = rt.borrow_mut();
             runtime.load_script(&source)?;
@@ -105,7 +112,9 @@ impl HotReloader {
 }
 
 impl Default for HotReloader {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]

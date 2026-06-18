@@ -5,15 +5,15 @@ use std::time::Instant;
 
 use thiserror::Error;
 
-use nexforge_ecs::{Entity, World, SystemScheduler};
-use nexforge_renderer::pipeline::{RenderContext, RenderError};
-use nexforge_physics::{PhysicsEngine, PhysicsError};
-use nexforge_audio::{AudioEngine, AudioError};
 use nexforge_ai::AiEngine;
-use nexforge_net::NetEngine;
-use nexscript::{ScriptRuntime, EntityId, InputState};
+use nexforge_audio::{AudioEngine, AudioError};
 use nexforge_dev_console::DevConsole;
+use nexforge_ecs::{Entity, SystemScheduler, World};
+use nexforge_net::NetEngine;
+use nexforge_physics::{PhysicsEngine, PhysicsError};
 use nexforge_profiler::FrameProfiler;
+use nexforge_renderer::pipeline::{RenderContext, RenderError};
+use nexscript::{EntityId, InputState, ScriptRuntime};
 
 #[derive(Debug, Error)]
 pub enum EngineError {
@@ -30,7 +30,9 @@ pub enum EngineError {
 }
 
 impl From<String> for EngineError {
-    fn from(s: String) -> Self { EngineError::Script(s) }
+    fn from(s: String) -> Self {
+        EngineError::Script(s)
+    }
 }
 
 pub struct EntityMapper {
@@ -41,7 +43,11 @@ pub struct EntityMapper {
 
 impl EntityMapper {
     pub fn new() -> Self {
-        Self { ecs_to_nex: HashMap::new(), nex_to_ecs: HashMap::new(), next_nex_id: 1 }
+        Self {
+            ecs_to_nex: HashMap::new(),
+            nex_to_ecs: HashMap::new(),
+            next_nex_id: 1,
+        }
     }
 
     pub fn register(&mut self, ecs: Entity) -> EntityId {
@@ -67,7 +73,11 @@ impl EntityMapper {
     }
 }
 
-impl Default for EntityMapper { fn default() -> Self { Self::new() } }
+impl Default for EntityMapper {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 pub enum EngineMode {
     Editor,
@@ -121,7 +131,9 @@ impl<'a> Engine<'a> {
         }
     }
 
-    pub fn set_fixed_timestep(&mut self, dt: f64) { self.fixed_timestep = dt; }
+    pub fn set_fixed_timestep(&mut self, dt: f64) {
+        self.fixed_timestep = dt;
+    }
 
     pub fn version_string(&self) -> String {
         format!("Nexforge Engine v{}", env!("CARGO_PKG_VERSION"))
@@ -137,7 +149,11 @@ impl<'a> Engine<'a> {
 
     pub fn init_renderer(&mut self, window: &'a winit::window::Window) -> Result<(), EngineError> {
         let size = window.inner_size();
-        let aspect = if size.height > 0 { size.width as f32 / size.height as f32 } else { 16.0 / 9.0 };
+        let aspect = if size.height > 0 {
+            size.width as f32 / size.height as f32
+        } else {
+            16.0 / 9.0
+        };
         let mut renderer = RenderContext::new(aspect);
         renderer.initialize(window)?;
         self.renderer = Some(renderer);
@@ -163,15 +179,18 @@ impl<'a> Engine<'a> {
     pub fn fixed_update(&mut self, dt: f32) {
         self.profiler.begin_sample("physics", Instant::now());
         self.physics.step(dt);
-        self.profiler.end_sample("physics", Instant::now(), Instant::now().elapsed());
+        self.profiler
+            .end_sample("physics", Instant::now(), Instant::now().elapsed());
 
         self.profiler.begin_sample("script_update", Instant::now());
         let _ = self.script.update_all(dt);
-        self.profiler.end_sample("script_update", Instant::now(), Instant::now().elapsed());
+        self.profiler
+            .end_sample("script_update", Instant::now(), Instant::now().elapsed());
 
         self.profiler.begin_sample("ecs_systems", Instant::now());
         self.scheduler.run(&mut self.world);
-        self.profiler.end_sample("ecs_systems", Instant::now(), Instant::now().elapsed());
+        self.profiler
+            .end_sample("ecs_systems", Instant::now(), Instant::now().elapsed());
     }
 
     pub fn handle_input(&mut self, input: &InputState) {
@@ -209,10 +228,18 @@ impl<'a> Engine<'a> {
         log::info!("Engine shutdown complete");
     }
 
-    pub fn toggle_console(&mut self) { self.console.toggle(); }
-    pub fn toggle_profiler(&mut self) { self.profiler.toggle(); }
-    pub fn console_active(&self) -> bool { self.console.visible }
-    pub fn profiler_active(&self) -> bool { self.profiler.visible }
+    pub fn toggle_console(&mut self) {
+        self.console.toggle();
+    }
+    pub fn toggle_profiler(&mut self) {
+        self.profiler.toggle();
+    }
+    pub fn console_active(&self) -> bool {
+        self.console.visible
+    }
+    pub fn profiler_active(&self) -> bool {
+        self.profiler.visible
+    }
 }
 
 #[cfg(test)]

@@ -179,14 +179,18 @@ impl Lexer {
         let mut is_float = false;
         while let Some(ch) = self.peek() {
             if ch.is_ascii_digit() {
-                if let Some(c) = self.advance() { s.push(c); }
+                if let Some(c) = self.advance() {
+                    s.push(c);
+                }
             } else if ch == '.' {
                 // Peek ahead: if next char is also '.', it's ".." (range), not a float
                 if self.source.get(self.position + 1) == Some(&'.') {
                     break;
                 }
                 is_float = true;
-                if let Some(c) = self.advance() { s.push(c); }
+                if let Some(c) = self.advance() {
+                    s.push(c);
+                }
             } else {
                 break;
             }
@@ -203,7 +207,9 @@ impl Lexer {
         s.push(first);
         while let Some(ch) = self.peek() {
             if ch.is_alphanumeric() || ch == '_' {
-                if let Some(c) = self.advance() { s.push(c); }
+                if let Some(c) = self.advance() {
+                    s.push(c);
+                }
             } else {
                 break;
             }
@@ -388,9 +394,9 @@ mod tests {
 
     #[test]
     fn test_float_literal() {
-        let mut lexer = Lexer::new("3.14");
+        let mut lexer = Lexer::new("3.141592653589793");
         let tokens = lexer.tokenize().unwrap();
-        assert_eq!(tokens, vec![Token::Float(3.14), Token::Eof]);
+        assert_eq!(tokens, vec![Token::Float(std::f64::consts::PI), Token::Eof]);
     }
 
     #[test]
@@ -447,9 +453,12 @@ mod tests {
 
     #[test]
     fn test_comment_skipping() {
-        let mut lexer = Lexer::new("// comment\n42 /* block */ 3.14");
+        let mut lexer = Lexer::new("// comment\n42 /* block */ 3.141592653589793");
         let tokens = lexer.tokenize().unwrap();
-        assert_eq!(tokens, vec![Token::Int(42), Token::Float(3.14), Token::Eof]);
+        assert_eq!(
+            tokens,
+            vec![Token::Int(42), Token::Float(std::f64::consts::PI), Token::Eof]
+        );
     }
 
     #[test]

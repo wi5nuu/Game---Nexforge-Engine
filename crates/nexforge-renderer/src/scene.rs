@@ -1,5 +1,5 @@
+use crate::mesh::{Uniforms, Vertex, MESH_SHADER};
 use wgpu::util::DeviceExt;
-use crate::mesh::{Vertex, Uniforms, MESH_SHADER};
 
 pub struct SceneObject {
     pub vertex_buffer: wgpu::Buffer,
@@ -13,12 +13,16 @@ pub struct SceneObject {
 }
 
 impl SceneObject {
-    pub fn new(device: &wgpu::Device, layout: &wgpu::BindGroupLayout, position: [f32; 3], color: [f32; 3], scale: f32) -> Self {
+    pub fn new(
+        device: &wgpu::Device,
+        layout: &wgpu::BindGroupLayout,
+        position: [f32; 3],
+        color: [f32; 3],
+        scale: f32,
+    ) -> Self {
         let vertices = create_box_vertices(color);
         let indices: Vec<u16> = vec![
-            0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6,
-            0, 4, 5, 0, 5, 1, 1, 5, 6, 1, 6, 2,
-            2, 6, 7, 2, 7, 3, 3, 7, 4, 3, 4, 0,
+            0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 0, 4, 5, 0, 5, 1, 1, 5, 6, 1, 6, 2, 2, 6, 7, 2, 7, 3, 3, 7, 4, 3, 4, 0,
         ];
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Scene Object Vertex Buffer"),
@@ -44,7 +48,16 @@ impl SceneObject {
                 resource: uniform_buffer.as_entire_binding(),
             }],
         });
-        Self { vertex_buffer, index_buffer, num_indices: indices.len() as u32, uniform_buffer, bind_group, position, scale, rotation: 0.0 }
+        Self {
+            vertex_buffer,
+            index_buffer,
+            num_indices: indices.len() as u32,
+            uniform_buffer,
+            bind_group,
+            position,
+            scale,
+            rotation: 0.0,
+        }
     }
 
     pub fn update_uniforms(&self, queue: &wgpu::Queue, vp: [[f32; 4]; 4]) {
@@ -56,7 +69,10 @@ impl SceneObject {
             [-sin_r * self.scale, 0.0, cos_r * self.scale, 0.0],
             [self.position[0], self.position[1], self.position[2], 1.0],
         ];
-        let uniforms = Uniforms { vp_matrix: vp, model_matrix: model };
+        let uniforms = Uniforms {
+            vp_matrix: vp,
+            model_matrix: model,
+        };
         queue.write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&[uniforms]));
     }
 
@@ -71,14 +87,46 @@ impl SceneObject {
 fn create_box_vertices(color: [f32; 3]) -> Vec<Vertex> {
     let (r, g, b) = (color[0], color[1], color[2]);
     vec![
-        Vertex { position: [-0.5, -0.5, -0.5], color: [r, g, b], normal: [0.0, 0.0, -1.0] },
-        Vertex { position: [ 0.5, -0.5, -0.5], color: [r, g, b], normal: [0.0, 0.0, -1.0] },
-        Vertex { position: [ 0.5,  0.5, -0.5], color: [r, g, b], normal: [0.0, 0.0, -1.0] },
-        Vertex { position: [-0.5,  0.5, -0.5], color: [r, g, b], normal: [0.0, 0.0, -1.0] },
-        Vertex { position: [-0.5, -0.5,  0.5], color: [r, g, b], normal: [0.0, 0.0, 1.0] },
-        Vertex { position: [ 0.5, -0.5,  0.5], color: [r, g, b], normal: [0.0, 0.0, 1.0] },
-        Vertex { position: [ 0.5,  0.5,  0.5], color: [r, g, b], normal: [0.0, 0.0, 1.0] },
-        Vertex { position: [-0.5,  0.5,  0.5], color: [r, g, b], normal: [0.0, 0.0, 1.0] },
+        Vertex {
+            position: [-0.5, -0.5, -0.5],
+            color: [r, g, b],
+            normal: [0.0, 0.0, -1.0],
+        },
+        Vertex {
+            position: [0.5, -0.5, -0.5],
+            color: [r, g, b],
+            normal: [0.0, 0.0, -1.0],
+        },
+        Vertex {
+            position: [0.5, 0.5, -0.5],
+            color: [r, g, b],
+            normal: [0.0, 0.0, -1.0],
+        },
+        Vertex {
+            position: [-0.5, 0.5, -0.5],
+            color: [r, g, b],
+            normal: [0.0, 0.0, -1.0],
+        },
+        Vertex {
+            position: [-0.5, -0.5, 0.5],
+            color: [r, g, b],
+            normal: [0.0, 0.0, 1.0],
+        },
+        Vertex {
+            position: [0.5, -0.5, 0.5],
+            color: [r, g, b],
+            normal: [0.0, 0.0, 1.0],
+        },
+        Vertex {
+            position: [0.5, 0.5, 0.5],
+            color: [r, g, b],
+            normal: [0.0, 0.0, 1.0],
+        },
+        Vertex {
+            position: [-0.5, 0.5, 0.5],
+            color: [r, g, b],
+            normal: [0.0, 0.0, 1.0],
+        },
     ]
 }
 
@@ -162,7 +210,10 @@ impl Scene {
             SceneObject::new(device, &bind_group_layout, [0.0, -1.0, 0.0], [0.3, 0.3, 0.3], 20.0),
         ];
 
-        Self { objects, render_pipeline }
+        Self {
+            objects,
+            render_pipeline,
+        }
     }
 
     pub fn update(&mut self, dt: f64) {

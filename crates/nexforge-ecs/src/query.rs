@@ -33,7 +33,11 @@ mod tests {
     use super::*;
     use crate::world::World;
 
-    struct Pos { x: f32, y: f32 }
+    #[allow(dead_code)]
+    struct Pos {
+        x: f32,
+        y: f32,
+    }
 
     #[test]
     fn test_empty_query() {

@@ -47,7 +47,7 @@ mod tests {
 
     #[test]
     fn test_engine_tick_fixed_timestep() {
-        let mut engine = Engine::new(EngineMode::Headless);
+        let engine = Engine::new(EngineMode::Headless);
         assert!((engine.fixed_timestep - 1.0 / 60.0).abs() < f64::EPSILON);
     }
 

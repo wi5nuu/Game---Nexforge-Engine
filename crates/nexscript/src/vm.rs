@@ -1,8 +1,8 @@
 #![deny(clippy::all)]
 
 use crate::compiler::Bytecode;
-use thiserror::Error;
 use std::collections::HashMap;
+use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
@@ -136,9 +136,7 @@ impl Vm {
             Bytecode::PushFloat(val) => self.value_stack.push(Value::Float(val)),
             Bytecode::PushBool(val) => self.value_stack.push(Value::Bool(val)),
             Bytecode::PushString(idx) => {
-                let s = self.string_pool.get(idx as usize)
-                    .cloned()
-                    .unwrap_or_default();
+                let s = self.string_pool.get(idx as usize).cloned().unwrap_or_default();
                 self.value_stack.push(Value::String(s));
             }
             Bytecode::PushVec3(x, y, z) => self.value_stack.push(Value::Vec3(x, y, z)),
@@ -147,9 +145,7 @@ impl Vm {
                 self.value_stack.pop().ok_or(VmError::StackUnderflow)?;
             }
             Bytecode::Dup => {
-                let val = self.value_stack.last()
-                    .ok_or(VmError::StackUnderflow)?
-                    .clone();
+                let val = self.value_stack.last().ok_or(VmError::StackUnderflow)?.clone();
                 self.value_stack.push(val);
             }
             Bytecode::LoadLocal(idx) => {
@@ -157,8 +153,7 @@ impl Vm {
                 self.value_stack.push(val);
             }
             Bytecode::StoreLocal(idx) => {
-                let val = self.value_stack.pop()
-                    .ok_or(VmError::StackUnderflow)?;
+                let val = self.value_stack.pop().ok_or(VmError::StackUnderflow)?;
                 self.store_local(idx as usize, val)?;
             }
             Bytecode::Add => {
@@ -366,14 +361,16 @@ impl Vm {
 
     fn call_builtin(&mut self, id: u8) -> Result<(), VmError> {
         match id {
-            0 => { // log
+            0 => {
+                // log
                 let msg = self.value_stack.pop().unwrap_or(Value::String(String::new()));
                 if let Value::String(s) = msg {
                     println!("[NexScript] {}", s);
                 }
                 self.value_stack.push(Value::Null);
             }
-            1 => { // sin
+            1 => {
+                // sin
                 let val = self.value_stack.pop().unwrap_or(Value::Float(0.0));
                 let f = match val {
                     Value::Float(v) => v,
@@ -382,7 +379,8 @@ impl Vm {
                 };
                 self.value_stack.push(Value::Float(f.sin()));
             }
-            2 => { // cos
+            2 => {
+                // cos
                 let val = self.value_stack.pop().unwrap_or(Value::Float(0.0));
                 let f = match val {
                     Value::Float(v) => v,
@@ -391,7 +389,8 @@ impl Vm {
                 };
                 self.value_stack.push(Value::Float(f.cos()));
             }
-            3 => { // sqrt
+            3 => {
+                // sqrt
                 let val = self.value_stack.pop().unwrap_or(Value::Float(0.0));
                 let f = match val {
                     Value::Float(v) => v,
@@ -400,7 +399,8 @@ impl Vm {
                 };
                 self.value_stack.push(Value::Float(f.sqrt()));
             }
-            4 => { // abs
+            4 => {
+                // abs
                 let val = self.value_stack.pop().unwrap_or(Value::Int(0));
                 match val {
                     Value::Int(v) => self.value_stack.push(Value::Int(v.abs())),
@@ -408,7 +408,8 @@ impl Vm {
                     _ => self.value_stack.push(Value::Null),
                 }
             }
-            5 => { // clamp
+            5 => {
+                // clamp
                 let max = self.value_stack.pop().unwrap_or(Value::Float(1.0));
                 let min = self.value_stack.pop().unwrap_or(Value::Float(0.0));
                 let val = self.value_stack.pop().unwrap_or(Value::Float(0.0));
@@ -422,30 +423,37 @@ impl Vm {
                 };
                 self.value_stack.push(Value::Float(vf.clamp(minf, maxf)));
             }
-            6 => { // random
+            6 => {
+                // random
                 self.value_stack.push(Value::Float(rand::random::<f64>()));
             }
-            7 => { // print
+            7 => {
+                // print
                 let val = self.value_stack.pop().unwrap_or(Value::Null);
                 print!("{}", value_display(&val));
                 self.value_stack.push(Value::Null);
             }
-            8 => { // pop — discard top of stack
+            8 => {
+                // pop — discard top of stack
                 self.value_stack.pop().ok_or(VmError::StackUnderflow)?;
             }
-            9 => { // floor
+            9 => {
+                // floor
                 let v = pop_num(&mut self.value_stack);
                 self.value_stack.push(Value::Int(v.floor() as i32));
             }
-            10 => { // ceil
+            10 => {
+                // ceil
                 let v = pop_num(&mut self.value_stack);
                 self.value_stack.push(Value::Int(v.ceil() as i32));
             }
-            11 => { // round
+            11 => {
+                // round
                 let v = pop_num(&mut self.value_stack);
                 self.value_stack.push(Value::Int(v.round() as i32));
             }
-            12 => { // len (string)
+            12 => {
+                // len (string)
                 let s = self.value_stack.pop().unwrap_or(Value::String(String::new()));
                 let n = match s {
                     Value::String(ref s) => s.len() as i32,
@@ -453,53 +461,66 @@ impl Vm {
                 };
                 self.value_stack.push(Value::Int(n));
             }
-            13 => { // min
+            13 => {
+                // min
                 let b = pop_num(&mut self.value_stack);
                 let a = pop_num(&mut self.value_stack);
                 self.value_stack.push(Value::Float(a.min(b)));
             }
-            14 => { // max
+            14 => {
+                // max
                 let b = pop_num(&mut self.value_stack);
                 let a = pop_num(&mut self.value_stack);
                 self.value_stack.push(Value::Float(a.max(b)));
             }
-            15 => { // pow
+            15 => {
+                // pow
                 let b = pop_num(&mut self.value_stack);
                 let a = pop_num(&mut self.value_stack);
                 self.value_stack.push(Value::Float(a.powf(b)));
             }
-            16 => { // pi
+            16 => {
+                // pi
                 self.value_stack.push(Value::Float(std::f64::consts::PI));
             }
-            17 => { // lerp(a, b, t)
+            17 => {
+                // lerp(a, b, t)
                 let t = pop_num(&mut self.value_stack);
                 let b = pop_num(&mut self.value_stack);
                 let a = pop_num(&mut self.value_stack);
                 self.value_stack.push(Value::Float(a + (b - a) * t));
             }
-            18 => { // distance(x1,y1,z1,x2,y2,z2)
+            18 => {
+                // distance(x1,y1,z1,x2,y2,z2)
                 let z2 = pop_num(&mut self.value_stack);
                 let y2 = pop_num(&mut self.value_stack);
                 let x2 = pop_num(&mut self.value_stack);
                 let z1 = pop_num(&mut self.value_stack);
                 let y1 = pop_num(&mut self.value_stack);
                 let x1 = pop_num(&mut self.value_stack);
-                let dx = x1 - x2; let dy = y1 - y2; let dz = z1 - z2;
-                self.value_stack.push(Value::Float((dx*dx + dy*dy + dz*dz).sqrt()));
+                let dx = x1 - x2;
+                let dy = y1 - y2;
+                let dz = z1 - z2;
+                self.value_stack
+                    .push(Value::Float((dx * dx + dy * dy + dz * dz).sqrt()));
             }
-            19 => { // tan
+            19 => {
+                // tan
                 let v = pop_num(&mut self.value_stack);
                 self.value_stack.push(Value::Float(v.tan()));
             }
-            20 => { // exp
+            20 => {
+                // exp
                 let v = pop_num(&mut self.value_stack);
                 self.value_stack.push(Value::Float(v.exp()));
             }
-            21 => { // sign
+            21 => {
+                // sign
                 let v = pop_num(&mut self.value_stack);
                 self.value_stack.push(Value::Float(v.signum()));
             }
-            22 => { // deg2rad
+            22 => {
+                // deg2rad
                 let v = pop_num(&mut self.value_stack);
                 self.value_stack.push(Value::Float(v.to_radians()));
             }
@@ -522,12 +543,15 @@ impl Vm {
 
     pub fn resume_coroutine(&mut self, idx: usize) -> Result<Option<Value>, VmError> {
         let (coro_ip, coro_stack, coro_frames) = {
-            let coro = self.coroutines.get_mut(idx)
-                .ok_or(VmError::CoroutineNotFound)?;
+            let coro = self.coroutines.get_mut(idx).ok_or(VmError::CoroutineNotFound)?;
             if coro.completed {
                 return Ok(Some(Value::Null));
             }
-            (coro.ip, std::mem::take(&mut coro.stack), std::mem::take(&mut coro.frames))
+            (
+                coro.ip,
+                std::mem::take(&mut coro.stack),
+                std::mem::take(&mut coro.frames),
+            )
         };
 
         let saved_ip = self.ip;
@@ -581,9 +605,23 @@ impl Vm {
 }
 
 // Helper enums for internal dispatch
-enum BinaryOpKind { Add, Sub, Mul, Div, Mod }
-enum UnaryOpKind { Neg, Not }
-enum CompareOp { Lt, Gt, Le, Ge }
+enum BinaryOpKind {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Mod,
+}
+enum UnaryOpKind {
+    Neg,
+    Not,
+}
+enum CompareOp {
+    Lt,
+    Gt,
+    Le,
+    Ge,
+}
 
 fn binary_op(kind: BinaryOpKind, a: Value, b: Value) -> Result<Value, VmError> {
     let op_name = match kind {
@@ -599,12 +637,18 @@ fn binary_op(kind: BinaryOpKind, a: Value, b: Value) -> Result<Value, VmError> {
             BinaryOpKind::Sub => Ok(Value::Int(l - r)),
             BinaryOpKind::Mul => Ok(Value::Int(l * r)),
             BinaryOpKind::Div => {
-                if r == 0 { Err(VmError::DivisionByZero) }
-                else { Ok(Value::Int(l / r)) }
+                if r == 0 {
+                    Err(VmError::DivisionByZero)
+                } else {
+                    Ok(Value::Int(l / r))
+                }
             }
             BinaryOpKind::Mod => {
-                if r == 0 { Err(VmError::DivisionByZero) }
-                else { Ok(Value::Int(l % r)) }
+                if r == 0 {
+                    Err(VmError::DivisionByZero)
+                } else {
+                    Ok(Value::Int(l % r))
+                }
             }
         },
         (Value::Float(l), Value::Float(r)) => match kind {
@@ -612,12 +656,18 @@ fn binary_op(kind: BinaryOpKind, a: Value, b: Value) -> Result<Value, VmError> {
             BinaryOpKind::Sub => Ok(Value::Float(l - r)),
             BinaryOpKind::Mul => Ok(Value::Float(l * r)),
             BinaryOpKind::Div => {
-                if r == 0.0 { Err(VmError::DivisionByZero) }
-                else { Ok(Value::Float(l / r)) }
+                if r == 0.0 {
+                    Err(VmError::DivisionByZero)
+                } else {
+                    Ok(Value::Float(l / r))
+                }
             }
             BinaryOpKind::Mod => {
-                if r == 0.0 { Err(VmError::DivisionByZero) }
-                else { Ok(Value::Float(l % r)) }
+                if r == 0.0 {
+                    Err(VmError::DivisionByZero)
+                } else {
+                    Ok(Value::Float(l % r))
+                }
             }
         },
         (Value::Int(l), Value::Float(r)) => match kind {
@@ -625,12 +675,18 @@ fn binary_op(kind: BinaryOpKind, a: Value, b: Value) -> Result<Value, VmError> {
             BinaryOpKind::Sub => Ok(Value::Float(l as f64 - r)),
             BinaryOpKind::Mul => Ok(Value::Float(l as f64 * r)),
             BinaryOpKind::Div => {
-                if r == 0.0 { Err(VmError::DivisionByZero) }
-                else { Ok(Value::Float(l as f64 / r)) }
+                if r == 0.0 {
+                    Err(VmError::DivisionByZero)
+                } else {
+                    Ok(Value::Float(l as f64 / r))
+                }
             }
             BinaryOpKind::Mod => {
-                if r == 0.0 { Err(VmError::DivisionByZero) }
-                else { Ok(Value::Float((l as f64) % r)) }
+                if r == 0.0 {
+                    Err(VmError::DivisionByZero)
+                } else {
+                    Ok(Value::Float((l as f64) % r))
+                }
             }
         },
         (Value::Float(l), Value::Int(r)) => match kind {
@@ -638,17 +694,21 @@ fn binary_op(kind: BinaryOpKind, a: Value, b: Value) -> Result<Value, VmError> {
             BinaryOpKind::Sub => Ok(Value::Float(l - r as f64)),
             BinaryOpKind::Mul => Ok(Value::Float(l * r as f64)),
             BinaryOpKind::Div => {
-                if r == 0 { Err(VmError::DivisionByZero) }
-                else { Ok(Value::Float(l / r as f64)) }
+                if r == 0 {
+                    Err(VmError::DivisionByZero)
+                } else {
+                    Ok(Value::Float(l / r as f64))
+                }
             }
             BinaryOpKind::Mod => {
-                if r == 0 { Err(VmError::DivisionByZero) }
-                else { Ok(Value::Float(l % (r as f64))) }
+                if r == 0 {
+                    Err(VmError::DivisionByZero)
+                } else {
+                    Ok(Value::Float(l % (r as f64)))
+                }
             }
         },
-        (Value::String(l), Value::String(r)) if matches!(kind, BinaryOpKind::Add) => {
-            Ok(Value::String(l + &r))
-        }
+        (Value::String(l), Value::String(r)) if matches!(kind, BinaryOpKind::Add) => Ok(Value::String(l + &r)),
         (l, r) => Err(VmError::TypeError {
             op: op_name.to_string(),
             lhs: l,
@@ -798,8 +858,8 @@ mod tests {
 
     #[test]
     fn test_push_float() {
-        let result = run_source("3.14;").unwrap();
-        assert!((extract_float(result) - 3.14).abs() < f64::EPSILON);
+        let result = run_source("3.141592653589793;").unwrap();
+        assert!((extract_float(result) - std::f64::consts::PI).abs() < f64::EPSILON);
     }
 
     #[test]
@@ -940,7 +1000,7 @@ mod tests {
         let (bytecode, string_pool) = compiler.compile(&ast).unwrap();
         let mut vm = Vm::new(bytecode, string_pool);
         let result = vm.run().unwrap();
-        assert!(matches!(result, None));
+        assert!(result.is_none());
     }
 
     #[test]
