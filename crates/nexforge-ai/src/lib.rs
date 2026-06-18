@@ -196,6 +196,25 @@ pub struct NavMesh {
 impl NavMesh {
     pub fn new() -> Self { Self { nodes: Vec::new(), neighbors: Vec::new(), triangle_indices: Vec::new() } }
 
+    pub fn remove_node(&mut self, idx: usize) -> bool {
+        if idx >= self.nodes.len() { return false; }
+        self.nodes.remove(idx);
+        self.neighbors.remove(idx);
+        for neighbors in &mut self.neighbors {
+            neighbors.retain(|n| *n != idx);
+            for n in neighbors.iter_mut() {
+                if *n > idx { *n -= 1; }
+            }
+        }
+        self.triangle_indices.retain(|t| t[0] != idx && t[1] != idx && t[2] != idx);
+        for t in &mut self.triangle_indices {
+            for c in t.iter_mut() {
+                if *c > idx { *c -= 1; }
+            }
+        }
+        true
+    }
+
     pub fn add_node(&mut self, x: f32, y: f32, z: f32) -> usize {
         let idx = self.nodes.len();
         self.nodes.push(NavNode { x, y, z, idx });
@@ -574,5 +593,18 @@ mod tests {
         assert_eq!(mesh.node_count(), 1);
         mesh.add_node(4.0, 5.0, 6.0);
         assert_eq!(mesh.node_count(), 2);
+    }
+
+    #[test]
+    fn test_navmesh_remove_node() {
+        let mut mesh = NavMesh::new();
+        let n0 = mesh.add_node(0.0, 0.0, 0.0);
+        let n1 = mesh.add_node(1.0, 0.0, 0.0);
+        let n2 = mesh.add_node(2.0, 0.0, 0.0);
+        mesh.add_edge(n0, n1);
+        assert_eq!(mesh.node_count(), 3);
+        assert!(mesh.remove_node(n1));
+        assert_eq!(mesh.node_count(), 2);
+        assert!(!mesh.remove_node(99));
     }
 }
