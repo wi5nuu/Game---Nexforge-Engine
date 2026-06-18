@@ -219,4 +219,24 @@ mod tests {
         engine.set_bus_volume(AudioBus::Music, 0.5);
         assert!((engine.buses[AudioBus::Music.index()].volume - 0.5).abs() < f32::EPSILON);
     }
+
+    #[test]
+    fn test_listener_position() {
+        let mut engine = AudioEngine::new();
+        engine.set_listener_position([10.0, 5.0, 0.0]);
+        assert_eq!(engine.listener_position, [10.0, 5.0, 0.0]);
+    }
+
+    #[test]
+    fn test_mix_sample_empty_bus() {
+        let engine = AudioEngine::new();
+        let sample = engine.mix_sample(AudioBus::Sfx.index(), 0);
+        assert_eq!(sample, 0.0);
+    }
+
+    #[test]
+    fn test_speed_of_sound() {
+        let engine = AudioEngine::new();
+        assert!((engine.speed_of_sound - 343.0).abs() < f32::EPSILON);
+    }
 }

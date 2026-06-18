@@ -189,4 +189,40 @@ mod tests {
         let result = cc.move_and_slide([1.0, 0.0, 0.0], 0.016);
         assert_eq!(result[0], 1.0);
     }
+
+    #[test]
+    fn test_character_controller_defaults() {
+        let cc = CharacterController::new();
+        assert_eq!(cc.height, 1.8);
+        assert_eq!(cc.radius, 0.4);
+        assert!(!cc.is_grounded);
+    }
+
+    #[test]
+    fn test_trigger_zone_initialization() {
+        let zone = TriggerZone::new([1.0, 2.0, 3.0], 10.0);
+        assert_eq!(zone.position, [1.0, 2.0, 3.0]);
+        assert_eq!(zone.radius, 10.0);
+        assert!(zone.active);
+    }
+
+    #[test]
+    fn test_trigger_zone_entities() {
+        let mut zone = TriggerZone::new([0.0, 0.0, 0.0], 5.0);
+        zone.entities_inside.push(42);
+        assert_eq!(zone.entities_inside.len(), 1);
+    }
+
+    #[test]
+    fn test_bvh_query_empty() {
+        let bvh = Bvh::new();
+        let result = bvh.query([0.0, 0.0, 0.0], 10.0);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_physics_error_display() {
+        let err = PhysicsError::RaycastMiss;
+        assert_eq!(format!("{}", err), "Raycast did not hit any entity");
+    }
 }

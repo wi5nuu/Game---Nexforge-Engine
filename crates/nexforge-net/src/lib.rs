@@ -304,4 +304,48 @@ mod tests {
         let predicted = rm.predict(&snapshot, &inputs);
         assert_eq!(predicted.entities[0].position[2], -0.1);
     }
+
+    #[test]
+    fn test_player_input_serialization() {
+        let input = PlayerInput { frame: 42, forward: true, shoot: true, ..Default::default() };
+        let bytes = input.serialize();
+        let decoded = PlayerInput::deserialize(&bytes);
+        assert_eq!(decoded.frame, 42);
+        assert!(decoded.forward);
+        assert!(decoded.shoot);
+    }
+
+    #[test]
+    fn test_input_buffer_ring() {
+        let mut buffer = InputBuffer::new();
+        for i in 0..5 {
+            buffer.push(PlayerInput { frame: i, ..Default::default() });
+        }
+        assert_eq!(buffer.latest_frame(), 4);
+    }
+
+    #[test]
+    fn test_input_buffer_get() {
+        let mut buffer = InputBuffer::new();
+        buffer.push(PlayerInput { frame: 10, forward: true, ..Default::default() });
+        let retrieved = buffer.get(10);
+        assert!(retrieved.is_some());
+        assert!(retrieved.unwrap().forward);
+    }
+
+    #[test]
+    fn test_delta_compressor_empty() {
+        let snapshot = WorldSnapshot { frame: 0, entities: vec![] };
+        let compressed = DeltaCompressor::compress(&snapshot, &snapshot);
+        assert!(compressed.is_empty());
+    }
+
+    #[test]
+    fn test_rollback_manager_frame_tracking() {
+        let mut rm = RollbackManager::new();
+        let snapshot = WorldSnapshot { frame: 0, entities: vec![] };
+        rm.save_snapshot(snapshot);
+        let found = rm.find_snapshot(0);
+        assert!(found.is_some());
+    }
 }

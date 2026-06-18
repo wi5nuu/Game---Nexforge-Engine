@@ -468,4 +468,63 @@ mod tests {
         let cover = engine.find_cover([0.0, 0.0, 0.0], [10.0, 0.0, 10.0]);
         assert!(cover.is_some());
     }
+
+    #[test]
+    fn test_cover_occupied() {
+        let cp = CoverPoint::new([0.0, 0.0, 0.0], [1.0, 0.0, 0.0]);
+        assert!(!cp.is_occupied);
+    }
+
+    #[test]
+    fn test_inverter_node() {
+        let mut bb = Blackboard::new();
+        let invert = Inverter::new(Box::new(always_fail()));
+        assert_eq!(invert.tick(&mut bb), BtStatus::Success);
+    }
+
+    #[test]
+    fn test_repeat_node() {
+        let mut bb = Blackboard::new();
+        let repeat = Repeat::new(Box::new(always_succeed()), 3);
+        assert_eq!(repeat.tick(&mut bb), BtStatus::Success);
+    }
+
+    #[test]
+    fn test_parallel_node() {
+        let mut bb = Blackboard::new();
+        let parallel = Parallel::new(vec![always_succeed(), always_succeed()]);
+        assert_eq!(parallel.tick(&mut bb), BtStatus::Success);
+    }
+
+    #[test]
+    fn test_navmesh_distance() {
+        let mesh = NavMesh::new();
+        let d = mesh.distance([0.0, 0.0, 0.0], [3.0, 0.0, 4.0]);
+        assert!((d - 5.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_a_star_pathfinding() {
+        let mut mesh = NavMesh::new();
+        let n0 = mesh.add_node([0.0, 0.0, 0.0]);
+        let n1 = mesh.add_node([10.0, 0.0, 0.0]);
+        let n2 = mesh.add_node([10.0, 0.0, 10.0]);
+        mesh.add_edge(n0, n1);
+        mesh.add_edge(n1, n2);
+        let path = mesh.find_path(n0, n2);
+        assert!(path.is_some());
+        assert_eq!(path.unwrap().len(), 3);
+    }
+
+    #[test]
+    fn test_utility_linear_curve() {
+        let score = linear_curve(0.5);
+        assert!((score - 0.5).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_utility_quadratic_curve() {
+        let score = quadratic_curve(0.5);
+        assert!((score - 0.25).abs() < 0.001);
+    }
 }
