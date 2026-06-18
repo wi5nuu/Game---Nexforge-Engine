@@ -1,6 +1,6 @@
 use thiserror::Error;
 use crate::camera::Camera;
-use crate::mesh::MeshRenderer;
+use crate::scene::Scene;
 
 #[derive(Debug, Error)]
 pub enum RenderError {
@@ -24,7 +24,7 @@ pub struct RenderContext<'a> {
     pub size: (u32, u32),
     pub depth_texture: Option<wgpu::Texture>,
     pub depth_view: Option<wgpu::TextureView>,
-    pub mesh_renderer: Option<MeshRenderer>,
+    pub scene: Option<Scene>,
     pub camera: Camera,
 }
 
@@ -34,7 +34,7 @@ impl<'a> RenderContext<'a> {
             surface: None, device: None, queue: None, config: None,
             size: (1920, 1080),
             depth_texture: None, depth_view: None,
-            mesh_renderer: None,
+            scene: None,
             camera: Camera::new(aspect),
         }
     }
@@ -86,25 +86,32 @@ impl<'a> RenderContext<'a> {
         surface.configure(&device, &config);
 
         let (depth_texture, depth_view) = Self::create_depth_texture(&device, width, height);
-        let mesh_renderer = MeshRenderer::new(&device, &config);
+        let scene = Scene::new(&device, &config);
 
         self.device = Some(device);
         self.queue = Some(queue);
         self.config = Some(config);
         self.depth_texture = Some(depth_texture);
         self.depth_view = Some(depth_view);
-        self.mesh_renderer = Some(mesh_renderer);
+        self.scene = Some(scene);
         Ok(())
     }
 
+    pub fn update_scene(&mut self, dt: f64) {
+        if let Some(ref mut scene) = self.scene {
+            scene.update(dt);
+        }
+    }
+
     pub fn render(&mut self, vp_matrix: [[f32; 4]; 4]) -> Result<(), RenderError> {
-        if let (Some(ref surface), Some(ref device), Some(ref queue), Some(ref depth_view), Some(ref mesh_renderer)) = (
-            self.surface.as_ref(), self.device.as_ref(), self.queue.as_ref(), self.depth_view.as_ref(), self.mesh_renderer.as_ref()
-        ) {
+        let surface = self.surface.as_ref();
+        let device = self.device.as_ref();
+        let queue = self.queue.as_ref();
+        let depth_view = self.depth_view.as_ref();
+        if let (Some(surface), Some(device), Some(queue), Some(depth_view)) = (surface, device, queue, depth_view) {
             let output = surface.get_current_texture().map_err(|e| RenderError::SurfaceError(e.to_string()))?;
             let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
             let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("Render Encoder") });
-            mesh_renderer.update_uniforms(queue, vp_matrix);
             {
                 let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: Some("Main Pass"),
@@ -127,7 +134,9 @@ impl<'a> RenderContext<'a> {
                     timestamp_writes: None,
                     occlusion_query_set: None,
                 });
-                mesh_renderer.render(&mut pass);
+                if let Some(ref scene) = self.scene {
+                    scene.render(queue, &mut pass, vp_matrix);
+                }
             }
             queue.submit(std::iter::once(encoder.finish()));
             output.present();

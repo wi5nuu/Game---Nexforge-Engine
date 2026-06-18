@@ -185,7 +185,7 @@ impl MeshRenderer {
     }
 }
 
-const MESH_SHADER: &str = r#"
+pub const MESH_SHADER: &str = r#"
 struct Uniforms {
     vp_matrix: mat4x4<f32>,
     model_matrix: mat4x4<f32>,

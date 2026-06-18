@@ -109,6 +109,7 @@ fn main() {
                 if let Some(ref mut renderer) = engine.renderer {
                     renderer.camera.update_mouse(input.mouse_x, input.mouse_y);
                     renderer.camera.update_keyboard(input.horizontal, input.vertical, input.sprint);
+                    renderer.update_scene(dt);
                     let vp = renderer.camera.vp_matrix();
                     if let Err(e) = renderer.render(vp) {
                         log::error!("Render error: {}", e);
