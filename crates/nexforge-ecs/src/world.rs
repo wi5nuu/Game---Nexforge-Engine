@@ -420,6 +420,10 @@ impl World {
         self.archetypes.len()
     }
 
+    pub fn entity_exists(&self, entity: Entity) -> bool {
+        self.entity_to_archetype.contains_key(&entity)
+    }
+
     pub fn registry(&self) -> &ComponentRegistry {
         &self.registry
     }
@@ -593,5 +597,14 @@ mod tests {
         world.clear_all();
         assert_eq!(world.entity_count(), 0);
         assert_eq!(world.archetype_count(), 0);
+    }
+
+    #[test]
+    fn test_entity_exists() {
+        let mut world = World::new();
+        let e = world.spawn(Pos { x: 1.0, y: 2.0 });
+        assert!(world.entity_exists(e));
+        world.despawn(e);
+        assert!(!world.entity_exists(e));
     }
 }
