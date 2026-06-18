@@ -356,7 +356,7 @@ mod tests {
         let mut lsp = LspServer::new();
         lsp.open_document("file:///test.nxs", "fn main() {\n  return 0;\n}");
         let doc = lsp.documents.get("file:///test.nxs").unwrap();
-        assert_eq!(doc.line_count, 3);
+        assert_eq!(doc.source.lines().count(), 3);
     }
 
     #[test]

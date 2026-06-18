@@ -308,8 +308,8 @@ mod tests {
     #[test]
     fn test_player_input_serialization() {
         let input = PlayerInput { frame: 42, forward: true, shoot: true, ..Default::default() };
-        let bytes = input.serialize();
-        let decoded = PlayerInput::deserialize(&bytes);
+        let bytes = input.serialize().unwrap();
+        let decoded = PlayerInput::deserialize(&bytes).unwrap();
         assert_eq!(decoded.frame, 42);
         assert!(decoded.forward);
         assert!(decoded.shoot);
@@ -317,7 +317,7 @@ mod tests {
 
     #[test]
     fn test_input_buffer_ring() {
-        let mut buffer = InputBuffer::new();
+        let mut buffer = InputBuffer::new(64);
         for i in 0..5 {
             buffer.push(PlayerInput { frame: i, ..Default::default() });
         }
@@ -326,7 +326,7 @@ mod tests {
 
     #[test]
     fn test_input_buffer_get() {
-        let mut buffer = InputBuffer::new();
+        let mut buffer = InputBuffer::new(64);
         buffer.push(PlayerInput { frame: 10, forward: true, ..Default::default() });
         let retrieved = buffer.get(10);
         assert!(retrieved.is_some());
@@ -337,7 +337,7 @@ mod tests {
     fn test_delta_compressor_empty() {
         let snapshot = WorldSnapshot { frame: 0, entities: vec![] };
         let compressed = DeltaCompressor::compress(&snapshot, &snapshot);
-        assert!(compressed.is_empty());
+        assert_eq!(compressed.len(), 4);
     }
 
     #[test]

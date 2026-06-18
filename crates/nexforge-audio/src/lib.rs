@@ -223,7 +223,7 @@ mod tests {
     #[test]
     fn test_listener_position() {
         let mut engine = AudioEngine::new();
-        engine.set_listener_position([10.0, 5.0, 0.0]);
+        engine.listener_position = [10.0, 5.0, 0.0];
         assert_eq!(engine.listener_position, [10.0, 5.0, 0.0]);
     }
 

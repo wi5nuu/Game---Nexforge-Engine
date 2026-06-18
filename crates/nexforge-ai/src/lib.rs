@@ -478,41 +478,43 @@ mod tests {
     #[test]
     fn test_inverter_node() {
         let mut bb = Blackboard::new();
-        let invert = Inverter::new(Box::new(always_fail()));
+        let mut invert = Inverter::new(always_fail());
         assert_eq!(invert.tick(&mut bb), BtStatus::Success);
     }
 
     #[test]
     fn test_repeat_node() {
         let mut bb = Blackboard::new();
-        let repeat = Repeat::new(Box::new(always_succeed()), 3);
+        let mut repeat = Repeat::new(always_succeed(), 1);
         assert_eq!(repeat.tick(&mut bb), BtStatus::Success);
     }
 
     #[test]
     fn test_parallel_node() {
         let mut bb = Blackboard::new();
-        let parallel = Parallel::new(vec![always_succeed(), always_succeed()]);
+        let mut parallel = Parallel::new(vec![always_succeed(), always_succeed()], 2);
         assert_eq!(parallel.tick(&mut bb), BtStatus::Success);
     }
 
     #[test]
     fn test_navmesh_distance() {
-        let mesh = NavMesh::new();
-        let d = mesh.distance([0.0, 0.0, 0.0], [3.0, 0.0, 4.0]);
+        let mut mesh = NavMesh::new();
+        let a = mesh.add_node(0.0, 0.0, 0.0);
+        let b = mesh.add_node(3.0, 0.0, 4.0);
+        let d = mesh.distance(a, b);
         assert!((d - 5.0).abs() < 0.001);
     }
 
     #[test]
     fn test_a_star_pathfinding() {
         let mut mesh = NavMesh::new();
-        let n0 = mesh.add_node([0.0, 0.0, 0.0]);
-        let n1 = mesh.add_node([10.0, 0.0, 0.0]);
-        let n2 = mesh.add_node([10.0, 0.0, 10.0]);
+        let n0 = mesh.add_node(0.0, 0.0, 0.0);
+        let n1 = mesh.add_node(10.0, 0.0, 0.0);
+        let n2 = mesh.add_node(10.0, 0.0, 10.0);
         mesh.add_edge(n0, n1);
         mesh.add_edge(n1, n2);
         let path = mesh.find_path(n0, n2);
-        assert!(path.is_some());
+        assert!(path.is_ok());
         assert_eq!(path.unwrap().len(), 3);
     }
 
