@@ -529,4 +529,36 @@ mod tests {
         let score = quadratic_curve(0.5);
         assert!((score - 0.25).abs() < 0.001);
     }
+
+    #[test]
+    fn test_cover_occupancy() {
+        let mut cover = CoverPoint::new([0.0; 3], [0.0, 0.0, 1.0]);
+        assert!(!cover.is_occupied);
+        cover.is_occupied = true;
+        assert!(cover.is_occupied);
+    }
+
+    #[test]
+    fn test_navmesh_add_node() {
+        let mut mesh = NavMesh::new();
+        let id = mesh.add_node(1.0, 2.0, 3.0);
+        assert_eq!(id, 0);
+        let id2 = mesh.add_node(4.0, 5.0, 6.0);
+        assert_eq!(id2, 1);
+    }
+
+    #[test]
+    fn test_navmesh_no_edges() {
+        let mut mesh = NavMesh::new();
+        let n0 = mesh.add_node(0.0, 0.0, 0.0);
+        let n1 = mesh.add_node(10.0, 0.0, 0.0);
+        let path = mesh.find_path(n0, n1);
+        assert!(path.is_err());
+    }
+
+    #[test]
+    fn test_ai_engine_defaults() {
+        let mut engine = AiEngine::new();
+        assert!(engine.initialize().is_ok());
+    }
 }
