@@ -285,7 +285,7 @@ mod tests {
         lsp.open_document("file:///test.nxs", "");
         let items = lsp.completions("file:///test.nxs", 0, 0);
         assert!(items.iter().any(|i| i.label == "log"));
-        assert!(items.iter().any(|i| i.label == "raycast"));
+        assert!(items.iter().any(|i| i.label == "floor"));
     }
 
     #[test]
