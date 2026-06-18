@@ -213,6 +213,8 @@ impl FrameProfiler {
 
     pub fn history_len(&self) -> usize { self.frame_history.len() }
 
+    pub fn set_max_history(&mut self, max: usize) { self.max_history = max; }
+
     pub fn reset(&mut self) {
         self.frame_history.clear();
         self.current_samples.clear();
@@ -352,5 +354,13 @@ mod tests {
         profiler.end_frame();
         assert_eq!(profiler.frame_count(), 1);
         assert_eq!(profiler.history_len(), 1);
+    }
+
+    #[test]
+    fn test_set_max_history() {
+        let mut profiler = FrameProfiler::new(10);
+        assert_eq!(profiler.max_history, 10);
+        profiler.set_max_history(100);
+        assert_eq!(profiler.max_history, 100);
     }
 }
