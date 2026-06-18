@@ -195,6 +195,8 @@ impl AudioEngine {
         self.master_volume
     }
 
+    pub fn get_bus_volume(&self, bus: &AudioBus) -> f32 { self.buses[bus.index()].volume }
+
     pub fn set_bus_volume(&mut self, bus: AudioBus, volume: f32) {
         self.buses[bus.index()].volume = volume.clamp(0.0, 1.0);
     }
@@ -359,6 +361,14 @@ mod tests {
     fn test_sample_count() {
         let clip = AudioClip::sine_wave(440.0, 1.0, 44100);
         assert_eq!(clip.sample_count(), 44100);
+    }
+
+    #[test]
+    fn test_get_bus_volume() {
+        let mut engine = AudioEngine::new();
+        assert!((engine.get_bus_volume(&AudioBus::Music) - 1.0).abs() < f32::EPSILON);
+        engine.set_bus_volume(AudioBus::Music, 0.3);
+        assert!((engine.get_bus_volume(&AudioBus::Music) - 0.3).abs() < f32::EPSILON);
     }
 
     #[test]
