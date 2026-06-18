@@ -487,6 +487,22 @@ impl Vm {
                 let dx = x1 - x2; let dy = y1 - y2; let dz = z1 - z2;
                 self.value_stack.push(Value::Float((dx*dx + dy*dy + dz*dz).sqrt()));
             }
+            19 => { // tan
+                let v = pop_num(&mut self.value_stack);
+                self.value_stack.push(Value::Float(v.tan()));
+            }
+            20 => { // exp
+                let v = pop_num(&mut self.value_stack);
+                self.value_stack.push(Value::Float(v.exp()));
+            }
+            21 => { // sign
+                let v = pop_num(&mut self.value_stack);
+                self.value_stack.push(Value::Float(v.signum()));
+            }
+            22 => { // deg2rad
+                let v = pop_num(&mut self.value_stack);
+                self.value_stack.push(Value::Float(v.to_radians()));
+            }
             _ => {}
         }
         Ok(())
@@ -1004,5 +1020,29 @@ mod tests {
     fn test_builtin_pow() {
         let result = run_source("pow(2.0, 3.0);").unwrap();
         assert!((extract_float(result) - 8.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_builtin_tan() {
+        let result = run_source("tan(0.0);").unwrap();
+        assert!((extract_float(result) - 0.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_builtin_exp() {
+        let result = run_source("exp(0.0);").unwrap();
+        assert!((extract_float(result) - 1.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_builtin_sign() {
+        let result = run_source("sign(-5.0);").unwrap();
+        assert!((extract_float(result) - (-1.0)).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_builtin_deg2rad() {
+        let result = run_source("deg2rad(180.0);").unwrap();
+        assert!((extract_float(result) - std::f64::consts::PI).abs() < 0.001);
     }
 }

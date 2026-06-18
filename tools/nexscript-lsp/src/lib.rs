@@ -177,6 +177,10 @@ impl LspServer {
             ("pi", "PI constant", CompletionItemKind::Function),
             ("lerp", "Linear interpolation", CompletionItemKind::Function),
             ("distance", "3D distance between points", CompletionItemKind::Function),
+            ("tan", "Tangent of angle", CompletionItemKind::Function),
+            ("exp", "Exponential (e^x)", CompletionItemKind::Function),
+            ("sign", "Sign of number (-1, 0, 1)", CompletionItemKind::Function),
+            ("deg2rad", "Convert degrees to radians", CompletionItemKind::Function),
         ];
 
         for (name, detail, kind) in &builtins {
@@ -334,5 +338,33 @@ mod tests {
         lsp.open_document("file:///test.nxs", "");
         lsp.close_document("file:///test.nxs");
         assert!(lsp.documents.is_empty());
+    }
+
+    #[test]
+    fn test_completions_new_builtins() {
+        let mut lsp = LspServer::new();
+        lsp.open_document("file:///test.nxs", "");
+        let items = lsp.completions("file:///test.nxs", 0, 0);
+        assert!(items.iter().any(|i| i.label == "tan"));
+        assert!(items.iter().any(|i| i.label == "exp"));
+        assert!(items.iter().any(|i| i.label == "sign"));
+        assert!(items.iter().any(|i| i.label == "deg2rad"));
+    }
+
+    #[test]
+    fn test_diagnostics_multiline() {
+        let mut lsp = LspServer::new();
+        lsp.open_document("file:///test.nxs", "fn main() {\n  return 0;\n}");
+        let doc = lsp.documents.get("file:///test.nxs").unwrap();
+        assert_eq!(doc.line_count, 3);
+    }
+
+    #[test]
+    fn test_document_symbols() {
+        let mut lsp = LspServer::new();
+        lsp.open_document("file:///test.nxs", "fn hello() {}\nfn world() {}");
+        let items = lsp.completions("file:///test.nxs", 2, 0);
+        assert!(items.iter().any(|i| i.label == "hello"));
+        assert!(items.iter().any(|i| i.label == "world"));
     }
 }

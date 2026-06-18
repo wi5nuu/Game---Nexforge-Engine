@@ -361,6 +361,10 @@ impl Compiler {
                                 "pi" => 16,
                                 "lerp" => 17,
                                 "distance" => 18,
+                                "tan" => 19,
+                                "exp" => 20,
+                                "sign" => 21,
+                                "deg2rad" => 22,
                                 _ => return Err(CompileError::FunctionNotFound(name.clone())),
                             };
                             self.bytecode.push(Bytecode::CallBuiltin(builtin_id));
