@@ -342,6 +342,10 @@ impl CoverPoint {
     pub fn new(position: [f32; 3], direction: [f32; 3]) -> Self {
         Self { position, direction, height: 1.5, is_occupied: false }
     }
+
+    pub fn set_position(&mut self, pos: [f32; 3]) { self.position = pos; }
+
+    pub fn set_occupied(&mut self, occupied: bool) { self.is_occupied = occupied; }
 }
 
 pub struct AiEngine {
@@ -595,6 +599,15 @@ mod tests {
         assert_eq!(mesh.node_count(), 1);
         mesh.add_node(4.0, 5.0, 6.0);
         assert_eq!(mesh.node_count(), 2);
+    }
+
+    #[test]
+    fn test_cover_point_setters() {
+        let mut cp = CoverPoint::new([0.0; 3], [0.0, 0.0, 1.0]);
+        cp.set_position([1.0, 2.0, 3.0]);
+        assert_eq!(cp.position, [1.0, 2.0, 3.0]);
+        cp.set_occupied(true);
+        assert!(cp.is_occupied);
     }
 
     #[test]
