@@ -295,7 +295,7 @@ mod tests {
 
     #[test]
     fn test_prediction() {
-        let mut rm = RollbackManager::new();
+        let rm = RollbackManager::new();
         let snapshot = WorldSnapshot {
             frame: 0,
             entities: vec![EntitySnapshot { id: 0, position: [0.0; 3], rotation: [0.0; 4], velocity: [0.0; 3], health: 100.0 }],
