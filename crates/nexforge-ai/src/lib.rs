@@ -362,6 +362,8 @@ impl AiEngine {
         Ok(())
     }
 
+    pub fn stop(&mut self) { self.initialized = false; }
+
     pub fn register_behavior(&mut self, name: &str, tree: Box<dyn BtNode>) {
         self.behavior_trees.insert(name.to_string(), tree);
         self.blackboards.insert(name.to_string(), Blackboard::new());
@@ -593,6 +595,16 @@ mod tests {
         assert_eq!(mesh.node_count(), 1);
         mesh.add_node(4.0, 5.0, 6.0);
         assert_eq!(mesh.node_count(), 2);
+    }
+
+    #[test]
+    fn test_ai_engine_stop() {
+        let mut engine = AiEngine::new();
+        assert!(!engine.is_initialized());
+        engine.initialize().unwrap();
+        assert!(engine.is_initialized());
+        engine.stop();
+        assert!(!engine.is_initialized());
     }
 
     #[test]
