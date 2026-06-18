@@ -171,6 +171,8 @@ impl DevConsole {
 
     pub fn set_max_lines(&mut self, max: usize) { self.max_lines = max; }
 
+    pub fn history_len(&self) -> usize { self.history.len() }
+
     pub fn clear_log(&mut self) {
         self.output_lines.clear();
     }
@@ -340,5 +342,14 @@ mod tests {
         assert_eq!(console.max_lines, 100);
         console.set_max_lines(50);
         assert_eq!(console.max_lines, 50);
+    }
+
+    #[test]
+    fn test_history_len() {
+        let mut console = DevConsole::new();
+        assert_eq!(console.history_len(), 0);
+        console.input_buffer = "test".to_string();
+        console.submit();
+        assert_eq!(console.history_len(), 1);
     }
 }
