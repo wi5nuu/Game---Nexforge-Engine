@@ -121,6 +121,8 @@ impl<'a> Engine<'a> {
         }
     }
 
+    pub fn set_fixed_timestep(&mut self, dt: f64) { self.fixed_timestep = dt; }
+
     pub fn version_string(&self) -> String {
         format!("Nexforge Engine v{}", env!("CARGO_PKG_VERSION"))
     }

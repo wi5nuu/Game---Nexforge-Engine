@@ -67,4 +67,12 @@ mod tests {
         let ver = engine.version_string();
         assert!(ver.contains("Nexforge Engine v"));
     }
+
+    #[test]
+    fn test_set_fixed_timestep() {
+        let mut engine = Engine::new(EngineMode::Headless);
+        assert!((engine.fixed_timestep - 1.0 / 60.0).abs() < f64::EPSILON);
+        engine.set_fixed_timestep(1.0 / 30.0);
+        assert!((engine.fixed_timestep - 1.0 / 30.0).abs() < f64::EPSILON);
+    }
 }
