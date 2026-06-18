@@ -181,6 +181,10 @@ impl AudioEngine {
         self.buses.iter().map(|b| b.sources.len()).sum()
     }
 
+    pub fn bus_source_count(&self, bus: &AudioBus) -> usize {
+        self.buses[bus.index()].sources.len()
+    }
+
     pub fn get_master_volume(&self) -> f32 {
         self.master_volume
     }
@@ -333,6 +337,16 @@ mod tests {
     fn test_get_master_volume() {
         let engine = AudioEngine::new();
         assert!((engine.get_master_volume() - 1.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_bus_source_count() {
+        let mut engine = AudioEngine::new();
+        assert_eq!(engine.bus_source_count(&AudioBus::Sfx), 0);
+        let clip = AudioClip::sine_wave(440.0, 0.1, 44100);
+        engine.play(clip, AudioBus::Music);
+        assert_eq!(engine.bus_source_count(&AudioBus::Music), 1);
+        assert_eq!(engine.bus_source_count(&AudioBus::Sfx), 0);
     }
 
     #[test]
