@@ -25,6 +25,12 @@ impl Camera {
         }
     }
 
+    pub fn reset_position(&mut self) {
+        self.position = [0.0, 1.6, 5.0];
+        self.yaw = -90.0f32.to_radians();
+        self.pitch = 0.0;
+    }
+
     pub fn forward(&self) -> [f32; 3] {
         let cos_pitch = self.pitch.cos();
         [
@@ -187,5 +193,16 @@ mod tests {
         let cam = Camera::new(16.0 / 9.0);
         let look = cam.look_at_matrix();
         assert_eq!(look[3][3], 1.0);
+    }
+
+    #[test]
+    fn test_camera_reset_position() {
+        let mut cam = Camera::new(16.0 / 9.0);
+        cam.position = [10.0, 20.0, 30.0];
+        cam.yaw = 1.0;
+        cam.pitch = 0.5;
+        cam.reset_position();
+        assert_eq!(cam.position, [0.0, 1.6, 5.0]);
+        assert!((cam.yaw - (-90.0f32.to_radians())).abs() < f32::EPSILON);
     }
 }
