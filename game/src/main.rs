@@ -1,6 +1,7 @@
 #![deny(clippy::all)]
 
 use nexforge_core::{Engine, EngineMode};
+use nexforge_renderer::camera::Camera;
 use nexscript::InputState;
 use winit::event::{Event, WindowEvent, ElementState};
 use winit::event_loop::ControlFlow;
@@ -107,7 +108,10 @@ fn main() {
                 engine.tick(dt);
 
                 if let Some(ref mut renderer) = engine.renderer {
-                    if let Err(e) = renderer.render() {
+                    renderer.camera.update_mouse(input.mouse_x, input.mouse_y);
+                    renderer.camera.update_keyboard(input.horizontal, input.vertical, input.sprint);
+                    let vp = renderer.camera.vp_matrix();
+                    if let Err(e) = renderer.render(vp) {
                         log::error!("Render error: {}", e);
                     }
                 }

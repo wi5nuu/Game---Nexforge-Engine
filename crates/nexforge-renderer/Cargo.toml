@@ -10,3 +10,4 @@ winit = { workspace = true }
 thiserror = { workspace = true }
 log = { workspace = true }
 pollster = "0.3"
+bytemuck = { version = "1", features = ["derive"] }

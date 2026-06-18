@@ -9,4 +9,5 @@ log = { workspace = true }
 env_logger = { workspace = true }
 nexforge-core = { path = "../crates/nexforge-core" }
 nexscript = { path = "../crates/nexscript" }
+nexforge-renderer = { path = "../crates/nexforge-renderer" }
 winit = { workspace = true }

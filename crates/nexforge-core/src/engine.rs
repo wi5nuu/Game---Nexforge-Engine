@@ -130,7 +130,9 @@ impl<'a> Engine<'a> {
     }
 
     pub fn init_renderer(&mut self, window: &'a winit::window::Window) -> Result<(), EngineError> {
-        let mut renderer = RenderContext::new();
+        let size = window.inner_size();
+        let aspect = if size.height > 0 { size.width as f32 / size.height as f32 } else { 16.0 / 9.0 };
+        let mut renderer = RenderContext::new(aspect);
         renderer.initialize(window)?;
         self.renderer = Some(renderer);
         Ok(())
