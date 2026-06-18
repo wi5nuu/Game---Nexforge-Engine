@@ -109,3 +109,84 @@ impl Camera {
         self.position[2] += flat_right[2] * horizontal * speed * dt;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_camera_creation() {
+        let cam = Camera::new(16.0 / 9.0);
+        assert!((cam.aspect - 16.0 / 9.0).abs() < 0.001);
+        assert_eq!(cam.position, [0.0, 1.6, 5.0]);
+    }
+
+    #[test]
+    fn test_camera_forward() {
+        let cam = Camera::new(16.0 / 9.0);
+        let fwd = cam.forward();
+        assert!((fwd[2] + 1.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_camera_mouse_look() {
+        let mut cam = Camera::new(16.0 / 9.0);
+        cam.update_mouse(100.0, 0.0);
+        assert!(cam.yaw > 0.0);
+    }
+
+    #[test]
+    fn test_camera_pitch_clamp() {
+        let mut cam = Camera::new(16.0 / 9.0);
+        cam.update_mouse(0.0, 100000.0);
+        assert!(cam.pitch.to_degrees() > -89.1);
+        cam.update_mouse(0.0, -100000.0);
+        assert!(cam.pitch.to_degrees() < 89.1);
+    }
+
+    #[test]
+    fn test_camera_vp_matrix() {
+        let cam = Camera::new(16.0 / 9.0);
+        let vp = cam.vp_matrix();
+        assert!(vp[0][0] != 0.0);
+    }
+
+    #[test]
+    fn test_camera_keyboard_movement() {
+        let mut cam = Camera::new(16.0 / 9.0);
+        cam.update_keyboard(0.0, 1.0, false);
+        assert!(cam.position[2] < 5.0);
+    }
+
+    #[test]
+    fn test_camera_sprint() {
+        let mut cam = Camera::new(16.0 / 9.0);
+        cam.update_keyboard(0.0, 1.0, true);
+        let sprint_pos = cam.position[2];
+        let mut cam2 = Camera::new(16.0 / 9.0);
+        cam2.update_keyboard(0.0, 1.0, false);
+        assert!(sprint_pos < cam2.position[2]);
+    }
+
+    #[test]
+    fn test_camera_right_vector() {
+        let mut cam = Camera::new(16.0 / 9.0);
+        cam.yaw = 0.0;
+        let right = cam.right();
+        assert!(right[0] > 0.0);
+    }
+
+    #[test]
+    fn test_camera_perspective_matrix() {
+        let cam = Camera::new(16.0 / 9.0);
+        let proj = cam.perspective_matrix();
+        assert!(proj[0][0] > proj[1][1]);
+    }
+
+    #[test]
+    fn test_camera_look_at_matrix() {
+        let cam = Camera::new(16.0 / 9.0);
+        let look = cam.look_at_matrix();
+        assert_eq!(look[3][3], 1.0);
+    }
+}
