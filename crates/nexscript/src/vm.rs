@@ -433,6 +433,60 @@ impl Vm {
             8 => { // pop — discard top of stack
                 self.value_stack.pop().ok_or(VmError::StackUnderflow)?;
             }
+            9 => { // floor
+                let v = pop_num(&mut self.value_stack);
+                self.value_stack.push(Value::Int(v.floor() as i32));
+            }
+            10 => { // ceil
+                let v = pop_num(&mut self.value_stack);
+                self.value_stack.push(Value::Int(v.ceil() as i32));
+            }
+            11 => { // round
+                let v = pop_num(&mut self.value_stack);
+                self.value_stack.push(Value::Int(v.round() as i32));
+            }
+            12 => { // len (string)
+                let s = self.value_stack.pop().unwrap_or(Value::String(String::new()));
+                let n = match s {
+                    Value::String(ref s) => s.len() as i32,
+                    _ => 0,
+                };
+                self.value_stack.push(Value::Int(n));
+            }
+            13 => { // min
+                let b = pop_num(&mut self.value_stack);
+                let a = pop_num(&mut self.value_stack);
+                self.value_stack.push(Value::Float(a.min(b)));
+            }
+            14 => { // max
+                let b = pop_num(&mut self.value_stack);
+                let a = pop_num(&mut self.value_stack);
+                self.value_stack.push(Value::Float(a.max(b)));
+            }
+            15 => { // pow
+                let b = pop_num(&mut self.value_stack);
+                let a = pop_num(&mut self.value_stack);
+                self.value_stack.push(Value::Float(a.powf(b)));
+            }
+            16 => { // pi
+                self.value_stack.push(Value::Float(std::f64::consts::PI));
+            }
+            17 => { // lerp(a, b, t)
+                let t = pop_num(&mut self.value_stack);
+                let b = pop_num(&mut self.value_stack);
+                let a = pop_num(&mut self.value_stack);
+                self.value_stack.push(Value::Float(a + (b - a) * t));
+            }
+            18 => { // distance(x1,y1,z1,x2,y2,z2)
+                let z2 = pop_num(&mut self.value_stack);
+                let y2 = pop_num(&mut self.value_stack);
+                let x2 = pop_num(&mut self.value_stack);
+                let z1 = pop_num(&mut self.value_stack);
+                let y1 = pop_num(&mut self.value_stack);
+                let x1 = pop_num(&mut self.value_stack);
+                let dx = x1 - x2; let dy = y1 - y2; let dz = z1 - z2;
+                self.value_stack.push(Value::Float((dx*dx + dy*dy + dz*dz).sqrt()));
+            }
             _ => {}
         }
         Ok(())
@@ -659,6 +713,14 @@ fn values_equal(a: &Value, b: &Value) -> bool {
         (Value::String(l), Value::String(r)) => l == r,
         (Value::Null, Value::Null) => true,
         _ => false,
+    }
+}
+
+fn pop_num(stack: &mut Vec<Value>) -> f64 {
+    match stack.pop().unwrap_or(Value::Float(0.0)) {
+        Value::Float(v) => v,
+        Value::Int(v) => v as f64,
+        _ => 0.0,
     }
 }
 

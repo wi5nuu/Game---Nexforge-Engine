@@ -351,6 +351,16 @@ impl Compiler {
                                 "random" => 6,
                                 "print" => 7,
                                 "pop" => 8,
+                                "floor" => 9,
+                                "ceil" => 10,
+                                "round" => 11,
+                                "len" => 12,
+                                "min" => 13,
+                                "max" => 14,
+                                "pow" => 15,
+                                "pi" => 16,
+                                "lerp" => 17,
+                                "distance" => 18,
                                 _ => return Err(CompileError::FunctionNotFound(name.clone())),
                             };
                             self.bytecode.push(Bytecode::CallBuiltin(builtin_id));
