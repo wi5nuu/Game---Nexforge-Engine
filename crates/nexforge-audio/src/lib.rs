@@ -155,6 +155,28 @@ impl AudioEngine {
         self.listener_position = pos;
     }
 
+    pub fn get_listener_position(&self) -> [f32; 3] {
+        self.listener_position
+    }
+
+    pub fn set_listener_velocity(&mut self, vel: [f32; 3]) {
+        self.listener_velocity = vel;
+    }
+
+    pub fn set_master_volume(&mut self, volume: f32) {
+        self.master_volume = volume.clamp(0.0, 1.0);
+    }
+
+    pub fn set_speed_of_sound(&mut self, speed: f32) {
+        self.speed_of_sound = speed;
+    }
+
+    pub fn stop_all(&mut self) {
+        for bus in &mut self.buses {
+            bus.sources.clear();
+        }
+    }
+
     pub fn set_bus_volume(&mut self, bus: AudioBus, volume: f32) {
         self.buses[bus.index()].volume = volume.clamp(0.0, 1.0);
     }
@@ -242,5 +264,51 @@ mod tests {
     fn test_speed_of_sound() {
         let engine = AudioEngine::new();
         assert!((engine.speed_of_sound - 343.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_set_listener_position() {
+        let mut engine = AudioEngine::new();
+        engine.set_listener_position([10.0, 20.0, 30.0]);
+        assert_eq!(engine.get_listener_position(), [10.0, 20.0, 30.0]);
+    }
+
+    #[test]
+    fn test_set_master_volume() {
+        let mut engine = AudioEngine::new();
+        engine.set_master_volume(0.5);
+        assert!((engine.master_volume - 0.5).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_set_listener_velocity() {
+        let mut engine = AudioEngine::new();
+        engine.set_listener_velocity([1.0, 2.0, 3.0]);
+        assert_eq!(engine.listener_velocity, [1.0, 2.0, 3.0]);
+    }
+
+    #[test]
+    fn test_set_speed_of_sound() {
+        let mut engine = AudioEngine::new();
+        engine.set_speed_of_sound(300.0);
+        assert!((engine.speed_of_sound - 300.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_stop_all() {
+        let mut engine = AudioEngine::new();
+        let clip = AudioClip::sine_wave(440.0, 0.1, 44100);
+        engine.play(clip, AudioBus::Sfx);
+        assert_eq!(engine.buses[AudioBus::Sfx.index()].sources.len(), 1);
+        engine.stop_all();
+        assert_eq!(engine.buses[AudioBus::Sfx.index()].sources.len(), 0);
+    }
+
+    #[test]
+    fn test_play_3d_creates_source() {
+        let mut engine = AudioEngine::new();
+        let clip = AudioClip::sine_wave(440.0, 0.1, 44100);
+        engine.play_3d(clip, [5.0, 0.0, 0.0], AudioBus::Sfx);
+        assert_eq!(engine.buses[AudioBus::Sfx.index()].sources.len(), 1);
     }
 }
