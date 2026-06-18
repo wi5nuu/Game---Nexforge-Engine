@@ -78,6 +78,8 @@ impl Bvh {
         // Placeholder — full BVH construction in later optimization pass
     }
 
+    pub fn clear(&mut self) { self.root = None; }
+
     pub fn query(&self, _origin: [f32; 3], _direction: [f32; 3]) -> Vec<u64> {
         Vec::new()
     }
@@ -204,6 +206,14 @@ mod tests {
         assert_eq!(engine.trigger_zones.len(), 1);
         engine.clear_trigger_zones();
         assert!(engine.trigger_zones.is_empty());
+    }
+
+    #[test]
+    fn test_bvh_clear() {
+        let mut bvh = Bvh::new();
+        bvh.build(&[]);
+        bvh.clear();
+        assert!(bvh.query([0.0; 3], [0.0, 0.0, 1.0]).is_empty());
     }
 
     #[test]
