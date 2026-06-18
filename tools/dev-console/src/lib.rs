@@ -169,6 +169,8 @@ impl DevConsole {
 
     pub fn output_line_count(&self) -> usize { self.output_lines.len() }
 
+    pub fn set_max_lines(&mut self, max: usize) { self.max_lines = max; }
+
     pub fn clear_log(&mut self) {
         self.output_lines.clear();
     }
@@ -330,5 +332,13 @@ mod tests {
         assert_eq!(console.output_line_count(), 2);
         console.clear_log();
         assert_eq!(console.output_line_count(), 0);
+    }
+
+    #[test]
+    fn test_set_max_lines() {
+        let mut console = DevConsole::new();
+        assert_eq!(console.max_lines, 100);
+        console.set_max_lines(50);
+        assert_eq!(console.max_lines, 50);
     }
 }
