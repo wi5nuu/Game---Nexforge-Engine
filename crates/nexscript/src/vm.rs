@@ -949,4 +949,60 @@ mod tests {
         let result = vm.run().unwrap();
         assert_eq!(extract_int(result), 100);
     }
+
+    #[test]
+    fn test_builtin_floor() {
+        assert_eq!(extract_int(run_source("floor(3.7);").unwrap()), 3);
+    }
+
+    #[test]
+    fn test_builtin_ceil() {
+        assert_eq!(extract_int(run_source("ceil(3.2);").unwrap()), 4);
+    }
+
+    #[test]
+    fn test_builtin_round() {
+        assert_eq!(extract_int(run_source("round(3.5);").unwrap()), 4);
+    }
+
+    #[test]
+    fn test_builtin_len() {
+        assert_eq!(extract_int(run_source("len(\"hello\");").unwrap()), 5);
+    }
+
+    #[test]
+    fn test_builtin_min() {
+        let result = run_source("min(10.0, 20.0);").unwrap();
+        assert!((extract_float(result) - 10.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_builtin_max() {
+        let result = run_source("max(10.0, 20.0);").unwrap();
+        assert!((extract_float(result) - 20.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_builtin_pi() {
+        let result = extract_float(run_source("pi();").unwrap());
+        assert!((result - std::f64::consts::PI).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_builtin_lerp() {
+        let result = run_source("lerp(0.0, 10.0, 0.5);").unwrap();
+        assert!((extract_float(result) - 5.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_builtin_distance() {
+        let result = run_source("distance(0.0, 0.0, 0.0, 3.0, 4.0, 0.0);").unwrap();
+        assert!((extract_float(result) - 5.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_builtin_pow() {
+        let result = run_source("pow(2.0, 3.0);").unwrap();
+        assert!((extract_float(result) - 8.0).abs() < 0.001);
+    }
 }

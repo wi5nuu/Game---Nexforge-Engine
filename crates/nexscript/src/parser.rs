@@ -917,6 +917,7 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::lexer::Lexer;
 
     fn parse_source(source: &str) -> Result<AstNode, ParseError> {
         let mut lexer = Lexer::new(source);
