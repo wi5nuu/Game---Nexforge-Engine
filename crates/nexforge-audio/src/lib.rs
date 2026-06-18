@@ -42,6 +42,8 @@ impl AudioClip {
         Self { samples, sample_rate, channels, duration }
     }
 
+    pub fn sample_count(&self) -> usize { self.samples.len() }
+
     pub fn sine_wave(freq: f32, duration: f32, sample_rate: u32) -> Self {
         let num_samples = (sample_rate as f32 * duration) as usize;
         let samples: Vec<f32> = (0..num_samples).map(|i| {
@@ -347,6 +349,12 @@ mod tests {
         engine.play(clip, AudioBus::Music);
         assert_eq!(engine.bus_source_count(&AudioBus::Music), 1);
         assert_eq!(engine.bus_source_count(&AudioBus::Sfx), 0);
+    }
+
+    #[test]
+    fn test_sample_count() {
+        let clip = AudioClip::sine_wave(440.0, 1.0, 44100);
+        assert_eq!(clip.sample_count(), 44100);
     }
 
     #[test]
