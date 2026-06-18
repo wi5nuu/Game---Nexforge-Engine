@@ -104,6 +104,10 @@ pub struct AudioBusChannel {
 
 impl AudioBusChannel {
     pub fn new() -> Self { Self { volume: 1.0, sources: Vec::new() } }
+
+    pub fn get_volume(&self) -> f32 { self.volume }
+
+    pub fn set_volume(&mut self, vol: f32) { self.volume = vol.clamp(0.0, 1.0); }
 }
 
 impl Default for AudioBusChannel { fn default() -> Self { Self::new() } }
@@ -361,6 +365,14 @@ mod tests {
     fn test_sample_count() {
         let clip = AudioClip::sine_wave(440.0, 1.0, 44100);
         assert_eq!(clip.sample_count(), 44100);
+    }
+
+    #[test]
+    fn test_audio_bus_channel_volume() {
+        let mut channel = AudioBusChannel::new();
+        assert!((channel.get_volume() - 1.0).abs() < f32::EPSILON);
+        channel.set_volume(0.5);
+        assert!((channel.get_volume() - 0.5).abs() < f32::EPSILON);
     }
 
     #[test]
