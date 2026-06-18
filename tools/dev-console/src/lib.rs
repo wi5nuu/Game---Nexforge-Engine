@@ -103,7 +103,7 @@ impl DevConsole {
 
     fn register_default_commands(&mut self) {
         self.register_command("help", |_| {
-            "Available commands:\n  help     - Show this message\n  clear    - Clear console\n  entities - List all entities\n  fps      - Show FPS\n  stats    - Show performance stats\n  spawn    - Spawn an entity: spawn <type>\n  tp       - Teleport: tp <x> <y> <z>\n  god      - Toggle god mode\n  gravity  - Set gravity: gravity <value>\n  time     - Set time scale: time <scale>\n  exit     - Exit console"
+            "Available commands:\n  help      - Show this message\n  clear     - Clear console\n  entities  - List all entities\n  fps       - Show FPS\n  stats     - Show performance stats\n  spawn     - Spawn an entity: spawn <type>\n  tp        - Teleport: tp <x> <y> <z>\n  god       - Toggle god mode\n  gravity   - Set gravity: gravity <value>\n  time      - Set time scale: time <scale>\n  exit      - Exit console\n  echo      - Print text: echo <msg>\n  teleport  - Teleport: teleport <x> <y> <z>\n  give      - Give item: give <item> [amount]\n  kill      - Kill entity: kill <entity_id>\n  heal      - Heal player: heal <amount>\n  set       - Set variable: set <var> <val>\n  get       - Get variable: get <var>"
                 .to_string()
         });
 
@@ -138,6 +138,31 @@ impl DevConsole {
         });
 
         self.register_command("exit", |_| { "Exiting console...".to_string() });
+        self.register_command("echo", |args| format!("{}", args.join(" ")));
+        self.register_command("teleport", |args| {
+            if args.len() < 3 { return "Usage: teleport <x> <y> <z>".to_string(); }
+            format!("Teleported to ({}, {}, {})", args[0], args[1], args[2])
+        });
+        self.register_command("give", |args| {
+            if args.is_empty() { return "Usage: give <item> [amount]".to_string(); }
+            format!("Gave {} x {}", args.get(1).unwrap_or(&"1"), args[0])
+        });
+        self.register_command("kill", |args| {
+            if args.is_empty() { return "Usage: kill <entity_id>".to_string(); }
+            format!("Killed entity {}", args[0])
+        });
+        self.register_command("heal", |args| {
+            if args.is_empty() { return "Usage: heal <amount>".to_string(); }
+            format!("Healed for {}", args[0])
+        });
+        self.register_command("set", |args| {
+            if args.len() < 2 { return "Usage: set <variable> <value>".to_string(); }
+            format!("Set {} = {}", args[0], args[1])
+        });
+        self.register_command("get", |args| {
+            if args.is_empty() { return "Usage: get <variable>".to_string(); }
+            format!("{} = ?", args[0])
+        });
     }
 
     pub fn execute(&mut self, command: &str) -> String {
