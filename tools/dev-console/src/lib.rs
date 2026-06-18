@@ -165,6 +165,10 @@ impl DevConsole {
         });
     }
 
+    pub fn clear_log(&mut self) {
+        self.output_lines.clear();
+    }
+
     pub fn execute(&mut self, command: &str) -> String {
         let parts: Vec<&str> = command.split_whitespace().collect();
         if parts.is_empty() { return String::new(); }
@@ -274,5 +278,34 @@ mod tests {
         });
         let result = console.execute("hello agent");
         assert_eq!(result, "Hello, agent!");
+    }
+
+    #[test]
+    fn test_clear_log() {
+        let mut console = DevConsole::new();
+        console.log("test", LogLevel::Info);
+        assert_eq!(console.output_lines.len(), 1);
+        console.clear_log();
+        assert!(console.output_lines.is_empty());
+    }
+
+    #[test]
+    fn test_toggle_console() {
+        let mut console = DevConsole::new();
+        assert!(!console.visible);
+        console.toggle();
+        assert!(console.visible);
+        console.toggle();
+        assert!(!console.visible);
+    }
+
+    #[test]
+    fn test_render_text() {
+        let mut console = DevConsole::new();
+        console.log("info msg", LogLevel::Info);
+        console.log("warn msg", LogLevel::Warning);
+        let text = console.render_text();
+        assert!(text.contains("info msg"));
+        assert!(text.contains("[WARN] warn msg"));
     }
 }
