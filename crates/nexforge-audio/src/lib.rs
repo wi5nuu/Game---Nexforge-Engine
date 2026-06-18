@@ -74,6 +74,10 @@ impl SpatialAudioSource {
 
     pub fn set_velocity(&mut self, vel: [f32; 3]) { self.velocity = vel; }
 
+    pub fn set_pitch(&mut self, pitch: f32) { self.pitch = pitch; }
+
+    pub fn set_looping(&mut self, looping: bool) { self.looping = looping; }
+
     pub fn calculate_attenuation(&self, listener_pos: [f32; 3]) -> f32 {
         let dx = self.position[0] - listener_pos[0];
         let dy = self.position[1] - listener_pos[1];
@@ -395,6 +399,17 @@ mod tests {
         let mut source = SpatialAudioSource::new();
         source.set_velocity([4.0, 5.0, 6.0]);
         assert_eq!(source.velocity, [4.0, 5.0, 6.0]);
+    }
+
+    #[test]
+    fn test_spatial_source_set_pitch_and_looping() {
+        let mut source = SpatialAudioSource::new();
+        assert!((source.pitch - 1.0).abs() < f32::EPSILON);
+        source.set_pitch(2.0);
+        assert!((source.pitch - 2.0).abs() < f32::EPSILON);
+        assert!(!source.looping);
+        source.set_looping(true);
+        assert!(source.looping);
     }
 
     #[test]
