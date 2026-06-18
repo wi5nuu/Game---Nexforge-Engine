@@ -36,6 +36,12 @@ impl CharacterController {
 
     pub fn capsule() -> Self { Self::new() }
 
+    pub fn set_velocity(&mut self, vel: [f32; 3]) { self.velocity = vel; }
+
+    pub fn set_height(&mut self, h: f32) { self.height = h; }
+
+    pub fn set_radius(&mut self, r: f32) { self.radius = r; }
+
     pub fn move_and_slide(&mut self, displacement: [f32; 3], _dt: f32) -> [f32; 3] {
         self.velocity = displacement;
         self.is_grounded = displacement[1] <= 0.0;
@@ -194,6 +200,17 @@ mod tests {
         assert_eq!(engine.trigger_zones.len(), 1);
         engine.clear_trigger_zones();
         assert!(engine.trigger_zones.is_empty());
+    }
+
+    #[test]
+    fn test_character_controller_setters() {
+        let mut cc = CharacterController::new();
+        cc.set_velocity([1.0, 2.0, 3.0]);
+        assert_eq!(cc.velocity, [1.0, 2.0, 3.0]);
+        cc.set_height(2.0);
+        assert!((cc.height - 2.0).abs() < f32::EPSILON);
+        cc.set_radius(0.5);
+        assert!((cc.radius - 0.5).abs() < f32::EPSILON);
     }
 
     #[test]
