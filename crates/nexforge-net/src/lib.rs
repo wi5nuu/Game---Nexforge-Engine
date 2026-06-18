@@ -46,6 +46,8 @@ impl PlayerInput {
         bincode::deserialize(data).map_err(|e| NetError::SerializationError(e.to_string()))
     }
 
+    pub fn set_sequence(&mut self, seq: u32) { self.sequence = seq; }
+
     pub fn delta(&self, base: &PlayerInput) -> Vec<u8> {
         let mut delta = Vec::new();
         if self.forward != base.forward { delta.push(1); delta.push(self.forward as u8); }
@@ -421,5 +423,13 @@ mod tests {
         assert!(!engine.is_server());
         engine.start_server();
         assert!(engine.is_server());
+    }
+
+    #[test]
+    fn test_player_input_set_sequence() {
+        let mut input = PlayerInput::new();
+        assert_eq!(input.sequence, 0);
+        input.set_sequence(42);
+        assert_eq!(input.sequence, 42);
     }
 }
