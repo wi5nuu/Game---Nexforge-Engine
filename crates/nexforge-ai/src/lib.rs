@@ -254,6 +254,10 @@ impl NavMesh {
         (dx * dx + dy * dy + dz * dz).sqrt()
     }
 
+    pub fn node_count(&self) -> usize {
+        self.nodes.len()
+    }
+
     fn heuristic(&self, a: usize, b: usize) -> f32 { self.distance(a, b) }
 }
 
@@ -560,5 +564,15 @@ mod tests {
     fn test_ai_engine_defaults() {
         let mut engine = AiEngine::new();
         assert!(engine.initialize().is_ok());
+    }
+
+    #[test]
+    fn test_navmesh_node_count() {
+        let mut mesh = NavMesh::new();
+        assert_eq!(mesh.node_count(), 0);
+        mesh.add_node(1.0, 2.0, 3.0);
+        assert_eq!(mesh.node_count(), 1);
+        mesh.add_node(4.0, 5.0, 6.0);
+        assert_eq!(mesh.node_count(), 2);
     }
 }
