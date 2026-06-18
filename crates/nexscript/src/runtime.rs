@@ -319,4 +319,67 @@ mod tests {
         assert_eq!(entity.name, "Enemy");
         assert!(entity.components.contains(&"Health".to_string()));
     }
+
+    #[test]
+    fn test_spawn_entity_triggers_event() {
+        let mut rt = ScriptRuntime::new();
+        let source = r#"
+            entity Player {
+                on_spawn() { let x = 1; }
+            }
+        "#;
+        rt.load_script(source).unwrap();
+        let pid = rt.spawn_entity("Player");
+        assert!(pid.is_some());
+    }
+
+    #[test]
+    fn test_spawn_nonexistent_entity() {
+        let mut rt = ScriptRuntime::new();
+        let result = rt.spawn_entity("NonExistent");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_kill_entity() {
+        let mut rt = ScriptRuntime::new();
+        let source = r#"
+            entity Enemy {
+                on_death() { let x = 0; }
+            }
+        "#;
+        rt.load_script(source).unwrap();
+        let id = *rt.entities.keys().next().unwrap();
+        assert!(rt.kill_entity(id).is_ok());
+    }
+
+    #[test]
+    fn test_set_input_state() {
+        let mut rt = ScriptRuntime::new();
+        let input = InputState { horizontal: 1.0, vertical: 0.0, mouse_x: 0.5, mouse_y: 0.0, jump: true, shoot: false, reload: false, sprint: false, crouch: false };
+        rt.set_input(input);
+        assert!((rt.context.input.horizontal - 1.0).abs() < f32::EPSILON);
+        assert!(rt.context.input.jump);
+    }
+
+    #[test]
+    fn test_multi_entity_script() {
+        let mut rt = ScriptRuntime::new();
+        let source = r#"
+            entity Player {
+                component Health { max: 100, current: 100 }
+                on_update(dt: float) {}
+            }
+            entity Enemy {
+                component Health { max: 50, current: 50 }
+                on_update(dt: float) {}
+            }
+            entity NPC {
+                component Health { max: 30, current: 30 }
+                on_update(dt: float) {}
+            }
+        "#;
+        rt.load_script(source).unwrap();
+        assert_eq!(rt.entities.len(), 3);
+    }
 }

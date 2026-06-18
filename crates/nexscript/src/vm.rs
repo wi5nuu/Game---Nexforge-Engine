@@ -1045,4 +1045,58 @@ mod tests {
         let result = run_source("deg2rad(180.0);").unwrap();
         assert!((extract_float(result) - std::f64::consts::PI).abs() < 0.001);
     }
+
+    #[test]
+    fn test_null_literal() {
+        let result = run_source("null;").unwrap();
+        assert!(matches!(result, Some(Value::Null)));
+    }
+
+    #[test]
+    fn test_while_complex_condition() {
+        let result = run_source("let x = 0; let y = 10; while x < y { x = x + 1; } x;").unwrap();
+        assert_eq!(extract_int(result), 10);
+    }
+
+    #[test]
+    fn test_builtin_abs_negative() {
+        let result = run_source("abs(-5);").unwrap();
+        assert_eq!(extract_int(result), 5);
+    }
+
+    #[test]
+    fn test_math_expression() {
+        let result = run_source("let x = (2.0 + 3.0) * (10.0 - 4.0) / 5.0; x;").unwrap();
+        assert!((extract_float(result) - 6.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_modulo_operation() {
+        let result = run_source("17 % 5;").unwrap();
+        assert_eq!(extract_int(result), 2);
+    }
+
+    #[test]
+    fn test_type_error_add_bool_int() {
+        let result = run_source("true + 1;");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_greater_than() {
+        let result = run_source("10 > 5;").unwrap();
+        assert!(extract_bool(result));
+    }
+
+    #[test]
+    fn test_less_or_equal() {
+        let result = run_source("3 <= 3;").unwrap();
+        assert!(extract_bool(result));
+    }
+
+    #[test]
+    fn test_greater_or_equal() {
+        let result = run_source("5 >= 10;").unwrap();
+        assert!(!extract_bool(result));
+    }
 }
