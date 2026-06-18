@@ -1,7 +1,7 @@
 #![deny(clippy::all)]
 
 use crate::ast::*;
-use crate::lexer::{Lexer, Token};
+use crate::lexer::Token;
 use thiserror::Error;
 
 #[derive(Debug, Error)]

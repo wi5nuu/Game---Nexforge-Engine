@@ -10,6 +10,7 @@ pub struct FileWatchEvent {
     pub path: String,
 }
 
+#[allow(dead_code)]
 pub struct HotReloader {
     pub enabled: bool,
     pub watch_paths: Vec<String>,

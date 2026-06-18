@@ -61,7 +61,7 @@ impl<'a> RenderContext<'a> {
         };
         surface.configure(&device, &config);
         self.device = Some(device); self.queue = Some(queue); self.config = Some(config);
-        if let (Some(ref device), Some(ref config)) = (&self.device, &self.config) {
+        if let (Some(ref device), Some(ref _config)) = (&self.device, &self.config) {
             self.clear_pipeline.initialize(device, format)?;
         }
         Ok(())

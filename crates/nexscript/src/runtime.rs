@@ -186,7 +186,7 @@ impl ScriptRuntime {
             ScriptEvent::TriggerExit(_) => "on_trigger_exit",
         };
 
-        if let Some((bytecode, params)) = entity.event_handlers.get(event_name) {
+        if let Some((bytecode, _params)) = entity.event_handlers.get(event_name) {
             if !bytecode.is_empty() {
                 self.vm = Vm::new(bytecode.clone(), self.string_pool.clone());
                 match event {

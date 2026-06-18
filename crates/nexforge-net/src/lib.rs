@@ -1,7 +1,6 @@
 #![deny(clippy::all)]
 
 use thiserror::Error;
-use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Error)]

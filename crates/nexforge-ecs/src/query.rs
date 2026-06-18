@@ -1,6 +1,5 @@
 #![deny(clippy::all)]
 
-use crate::component::ComponentId;
 use crate::entity::Entity;
 
 pub struct Query {

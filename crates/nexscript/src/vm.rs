@@ -56,6 +56,7 @@ pub struct Coroutine {
     completed: bool,
 }
 
+#[allow(dead_code)]
 pub struct Vm {
     bytecode: Vec<Bytecode>,
     string_pool: Vec<String>,
@@ -71,16 +72,7 @@ pub struct Vm {
 
 impl Vm {
     pub fn new(bytecode: Vec<Bytecode>, string_pool: Vec<String>) -> Self {
-        // Pre-compute function addresses
-        let mut func_addrs = Vec::new();
-        let mut ip = 0usize;
-        while ip < bytecode.len() {
-            if let Bytecode::Call(idx) = bytecode[ip] {
-                // We'll compute this differently
-            }
-            ip += 1;
-        }
-
+        let func_addrs = Vec::new();
         Self {
             bytecode,
             string_pool,
@@ -301,54 +293,11 @@ impl Vm {
     }
 
     fn do_call(&mut self, func_idx: u16) -> Result<(), VmError> {
-        // Scan for function address
-        let mut addr = 0usize;
-        let mut current_func = 0u16;
-        let mut found = false;
-
-        for (i, instr) in self.bytecode.iter().enumerate() {
-            if matches!(instr, Bytecode::Call(idx) if *idx == func_idx) {
-                // Skip - we use this to find where FnDef bytecode starts
-            }
-        }
-
-        // Find function by scanning for its address marker
-        // We'll use a simpler approach: scan the bytecode for FnDef sequences
-        let mut func_count = 0u16;
-        for i in 0..self.bytecode.len() {
-            if i + 2 < self.bytecode.len() {
-                if matches!(&self.bytecode[i], Bytecode::PushNull)
-                    && matches!(&self.bytecode[i + 1], Bytecode::Return)
-                {
-                    // End of function marker
-                }
-            }
-        }
-
-        // Simplified: walk forward from ip to find next function
-        let mut func_start = 0usize;
-        let mut func_idx_found = 0u16;
-        for (i, instr) in self.bytecode.iter().enumerate() {
-            if matches!(instr, Bytecode::Call(_)) || matches!(instr, Bytecode::Halt) {
-                func_count += 1;
-            }
-            if matches!(instr, Bytecode::Call(idx) if *idx == func_idx) {
-                // The Call instruction itself marks a function call
-            }
-        }
-
-        // For now, calculate address based on instruction positions
-        // Each function is stored contiguously in the bytecode after the main program
-        let mut pos = 0usize;
-        let mut f_idx = 0u16;
-        // Simple: collect all addresses after Halt instructions
         let func_addrs = self.collect_function_addresses();
         if let Some(&addr) = func_addrs.get(func_idx as usize) {
-            // Save stack frame
             if self.call_stack.len() >= MAX_CALL_STACK {
                 return Err(VmError::CallStackOverflow);
             }
-
             let frame = StackFrame {
                 return_ip: self.ip,
                 locals: Vec::new(),
@@ -379,13 +328,8 @@ impl Vm {
                 }
             }
         }
-        // Find function bodies: they are at the end of the bytecode
-        // Scan for functions as the sub-programs between Halt instructions
-        let mut found_halt = false;
         for i in 0..self.bytecode.len() {
-            if self.bytecode[i] == Bytecode::Halt && !found_halt {
-                found_halt = true;
-                // Functions start after the first Halt
+            if self.bytecode[i] == Bytecode::Halt {
                 let mut func_idx = 0usize;
                 let mut j = i + 1;
                 while j < self.bytecode.len() {
@@ -395,7 +339,6 @@ impl Vm {
                         addrs[func_idx] = j;
                     }
                     func_idx += 1;
-                    // Skip to next function (find next PushNull+Return pattern or Halt)
                     while j < self.bytecode.len() {
                         if j + 1 < self.bytecode.len()
                             && self.bytecode[j] == Bytecode::PushNull

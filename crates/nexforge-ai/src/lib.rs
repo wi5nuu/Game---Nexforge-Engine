@@ -351,7 +351,7 @@ impl AiEngine {
         } else { BtStatus::Failure }
     }
 
-    pub fn find_cover(&self, enemy_pos: [f32; 3], threat_pos: [f32; 3]) -> Option<&CoverPoint> {
+    pub fn find_cover(&self, enemy_pos: [f32; 3], _threat_pos: [f32; 3]) -> Option<&CoverPoint> {
         let mut best: Option<&CoverPoint> = None;
         let mut best_score = f32::MIN;
         for cp in &self.cover_points {

@@ -1,7 +1,6 @@
 #![deny(clippy::all)]
 
 use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -126,7 +125,7 @@ impl FrameProfiler {
         self.update_overlay();
     }
 
-    pub fn begin_sample(&mut self, name: &str, _start: Instant) {
+    pub fn begin_sample(&mut self, _name: &str, _start: Instant) {
         // Sample will be finalized in end_sample
     }
 

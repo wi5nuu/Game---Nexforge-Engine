@@ -160,7 +160,7 @@ impl AudioEngine {
         if bus.sources.is_empty() { return 0.0; }
         let mut mixed = 0.0f32;
         for source in &bus.sources {
-            if let Some(ref clip) = source.clip {
+            if let Some(ref _clip) = source.clip {
                 let attenuation = source.calculate_attenuation(self.listener_position);
                 mixed += attenuation * source.volume * bus.volume * self.master_volume;
             }

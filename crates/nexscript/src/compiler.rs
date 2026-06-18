@@ -74,6 +74,7 @@ pub struct Compiler {
     current_function: Option<usize>,
 }
 
+#[allow(dead_code)]
 struct CompiledFunction {
     name: String,
     arity: usize,
@@ -376,7 +377,7 @@ impl Compiler {
                 name,
                 params,
                 return_type: _,
-                is_coroutine,
+                is_coroutine: _,
                 body,
             } => {
                 let func_idx = self.resolve_function(name).unwrap_or(0);
@@ -463,7 +464,7 @@ impl Compiler {
         self.continues.push(Vec::new());
     }
 
-    fn end_loop(&mut self, loop_start: usize) {
+    fn end_loop(&mut self, _loop_start: usize) {
         // Patch breaks
         if let Some(breaks) = self.breaks.pop() {
             let end_addr = self.bytecode.len();
