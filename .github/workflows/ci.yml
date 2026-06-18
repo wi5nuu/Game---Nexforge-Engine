@@ -2,8 +2,32 @@ name: CI
 
 on: [push, pull_request]
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  build:
+  fmt:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - run: cargo clippy --workspace -- -D warnings
+
+  test:
+    name: Test
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -11,14 +35,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
-      - run: cargo fmt --check
-      - run: cargo clippy -- -D warnings
       - run: cargo test --workspace
+
+  build:
+    name: Build
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
       - run: cargo build --workspace --release
+      - run: cargo bench --workspace
 
   wasm:
+    name: WASM Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
