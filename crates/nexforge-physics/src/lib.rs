@@ -217,4 +217,47 @@ mod tests {
         let err = PhysicsError::RaycastMiss;
         assert_eq!(format!("{}", err), "Raycast miss");
     }
+
+    #[test]
+    fn test_raycast_hit_defaults() {
+        let hit = RaycastHit { entity: 0, point: [0.0; 3], normal: [1.0, 0.0, 0.0], distance: 10.0 };
+        assert_eq!(hit.distance, 10.0);
+        assert_eq!(hit.normal, [1.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn test_character_controller_properties() {
+        let cc = CharacterController::new();
+        assert!((cc.height - 1.8).abs() < f32::EPSILON);
+        assert!((cc.radius - 0.4).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_bvh_build() {
+        let mut bvh = Bvh::new();
+        bvh.build(&[([0.0, 0.0, 0.0], [1.0, 1.0, 1.0], 1)]);
+        let result = bvh.query([0.0, 0.0, 0.0], [10.0, 0.0, 0.0]);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_physics_engine_new() {
+        let engine = PhysicsEngine::new();
+        assert_eq!(engine.gravity, [0.0, -9.81, 0.0]);
+    }
+
+    #[test]
+    fn test_trigger_zone_expansion() {
+        let mut zone = TriggerZone::new([0.0, 0.0, 0.0], 10.0);
+        zone.radius = 20.0;
+        assert!((zone.radius - 20.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_bvh_node_defaults() {
+        let node = BvhNode::new();
+        assert!(node.is_leaf());
+        assert!(node.left.is_none());
+        assert!(node.right.is_none());
+    }
 }
