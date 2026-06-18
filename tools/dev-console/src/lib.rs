@@ -165,6 +165,10 @@ impl DevConsole {
         });
     }
 
+    pub fn input_len(&self) -> usize { self.input_buffer.len() }
+
+    pub fn output_line_count(&self) -> usize { self.output_lines.len() }
+
     pub fn clear_log(&mut self) {
         self.output_lines.clear();
     }
@@ -307,5 +311,24 @@ mod tests {
         let text = console.render_text();
         assert!(text.contains("info msg"));
         assert!(text.contains("[WARN] warn msg"));
+    }
+
+    #[test]
+    fn test_input_len() {
+        let mut console = DevConsole::new();
+        assert_eq!(console.input_len(), 0);
+        console.input_buffer = "hello".to_string();
+        assert_eq!(console.input_len(), 5);
+    }
+
+    #[test]
+    fn test_output_line_count() {
+        let mut console = DevConsole::new();
+        assert_eq!(console.output_line_count(), 0);
+        console.log("line1", LogLevel::Info);
+        console.log("line2", LogLevel::Error);
+        assert_eq!(console.output_line_count(), 2);
+        console.clear_log();
+        assert_eq!(console.output_line_count(), 0);
     }
 }
