@@ -25,6 +25,12 @@ impl Camera {
         }
     }
 
+    pub fn set_fov(&mut self, fov: f32) { self.fov = fov; }
+
+    pub fn get_fov(&self) -> f32 { self.fov }
+
+    pub fn set_clip_planes(&mut self, near: f32, far: f32) { self.near = near; self.far = far; }
+
     pub fn reset_position(&mut self) {
         self.position = [0.0, 1.6, 5.0];
         self.yaw = -90.0f32.to_radians();
@@ -204,5 +210,20 @@ mod tests {
         cam.reset_position();
         assert_eq!(cam.position, [0.0, 1.6, 5.0]);
         assert!((cam.yaw - (-90.0f32.to_radians())).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_camera_set_fov() {
+        let mut cam = Camera::new(16.0 / 9.0);
+        cam.set_fov(1.0);
+        assert!((cam.get_fov() - 1.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_camera_set_clip_planes() {
+        let mut cam = Camera::new(16.0 / 9.0);
+        cam.set_clip_planes(0.5, 500.0);
+        assert!((cam.near - 0.5).abs() < f32::EPSILON);
+        assert!((cam.far - 500.0).abs() < f32::EPSILON);
     }
 }
