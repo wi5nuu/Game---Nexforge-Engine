@@ -67,7 +67,7 @@ mod tests {
     #[test]
     fn test_system_execution() {
         let mut scheduler = SystemScheduler::new();
-        let mut counter = 0u32;
+        let counter = 0u32;
 
         scheduler.add_system(move |_world: &mut World| {
             let _ = counter;

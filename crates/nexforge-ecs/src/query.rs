@@ -52,8 +52,8 @@ mod tests {
     #[test]
     fn test_query_from_world() {
         let mut world = World::new();
-        let e1 = world.spawn(Pos { x: 1.0, y: 2.0 });
-        let e2 = world.spawn(Pos { x: 3.0, y: 4.0 });
+        let _e1 = world.spawn(Pos { x: 1.0, y: 2.0 });
+        let _e2 = world.spawn(Pos { x: 3.0, y: 4.0 });
         let cid = world.registry().resolve::<Pos>();
         let entities = world.query_entities(&[cid]);
         let query = Query::new(entities);
