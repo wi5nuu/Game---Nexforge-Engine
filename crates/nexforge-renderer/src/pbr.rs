@@ -15,6 +15,12 @@ impl PbrMaterial {
         Self { albedo, metallic, roughness, ao: 1.0, emissive: [0.0; 3], emissive_strength: 0.0, normal_scale: 1.0 }
     }
 
+    pub fn set_roughness(&mut self, r: f32) { self.roughness = r.clamp(0.0, 1.0); }
+
+    pub fn set_metallic(&mut self, m: f32) { self.metallic = m.clamp(0.0, 1.0); }
+
+    pub fn set_albedo(&mut self, r: f32, g: f32, b: f32, a: f32) { self.albedo = [r, g, b, a]; }
+
     pub fn to_gpu_bytes(&self) -> [f32; 16] {
         [
             self.albedo[0], self.albedo[1], self.albedo[2], self.albedo[3],
@@ -67,5 +73,25 @@ mod tests {
         let bytes = mat.to_gpu_bytes();
         assert_eq!(bytes.len(), 16);
         assert!((bytes[0] - 0.5).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_pbr_setters() {
+        let mut mat = PbrMaterial::default();
+        mat.set_roughness(0.3);
+        assert!((mat.roughness - 0.3).abs() < f32::EPSILON);
+        mat.set_metallic(0.7);
+        assert!((mat.metallic - 0.7).abs() < f32::EPSILON);
+        mat.set_albedo(1.0, 0.0, 0.0, 1.0);
+        assert_eq!(mat.albedo, [1.0, 0.0, 0.0, 1.0]);
+    }
+
+    #[test]
+    fn test_pbr_setters_clamp() {
+        let mut mat = PbrMaterial::default();
+        mat.set_roughness(2.0);
+        assert!((mat.roughness - 1.0).abs() < f32::EPSILON);
+        mat.set_metallic(-1.0);
+        assert!((mat.metallic - 0.0).abs() < f32::EPSILON);
     }
 }
