@@ -121,6 +121,10 @@ impl<'a> Engine<'a> {
         }
     }
 
+    pub fn version_string(&self) -> String {
+        format!("Nexforge Engine v{}", env!("CARGO_PKG_VERSION"))
+    }
+
     pub fn initialize(&mut self) -> Result<(), EngineError> {
         log::info!("Nexforge Engine v{} initializing...", env!("CARGO_PKG_VERSION"));
         self.physics.initialize()?;

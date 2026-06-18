@@ -60,4 +60,11 @@ mod tests {
         engine.tick(0.016);
         assert_eq!(engine.frame_count, 1);
     }
+
+    #[test]
+    fn test_version_string() {
+        let engine = Engine::new(EngineMode::Headless);
+        let ver = engine.version_string();
+        assert!(ver.contains("Nexforge Engine v"));
+    }
 }
