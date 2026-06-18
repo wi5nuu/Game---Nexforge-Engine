@@ -209,6 +209,14 @@ impl FrameProfiler {
             .fold(f64::MIN, |a, b| a.max(b))
     }
 
+    pub fn reset(&mut self) {
+        self.frame_history.clear();
+        self.current_samples.clear();
+        self.current_gpu.clear();
+        self.current_frame = 0;
+        self.overlay_text.clear();
+    }
+
     pub fn p99_frame_time_ms(&self) -> f64 {
         let mut times: Vec<f64> = self.frame_history.iter()
             .map(|f| f.total_duration_ns as f64 / 1_000_000.0)
@@ -308,5 +316,26 @@ mod tests {
         profiler.end_frame();
         assert!(profiler.overlay_text.contains("FPS"));
         assert!(profiler.overlay_text.contains("Nexforge Profiler"));
+    }
+
+    #[test]
+    fn test_reset() {
+        let mut profiler = FrameProfiler::new(128);
+        profiler.begin_frame();
+        profiler.end_frame();
+        assert_eq!(profiler.frame_history.len(), 1);
+        profiler.reset();
+        assert!(profiler.frame_history.is_empty());
+        assert_eq!(profiler.current_frame, 0);
+    }
+
+    #[test]
+    fn test_visible_property() {
+        let mut profiler = FrameProfiler::new(128);
+        assert!(!profiler.visible);
+        profiler.toggle();
+        assert!(profiler.visible);
+        profiler.toggle();
+        assert!(!profiler.visible);
     }
 }
