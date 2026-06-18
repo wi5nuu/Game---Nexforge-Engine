@@ -209,6 +209,10 @@ impl FrameProfiler {
             .fold(f64::MIN, |a, b| a.max(b))
     }
 
+    pub fn frame_count(&self) -> u64 { self.current_frame }
+
+    pub fn history_len(&self) -> usize { self.frame_history.len() }
+
     pub fn reset(&mut self) {
         self.frame_history.clear();
         self.current_samples.clear();
@@ -337,5 +341,16 @@ mod tests {
         assert!(profiler.visible);
         profiler.toggle();
         assert!(!profiler.visible);
+    }
+
+    #[test]
+    fn test_frame_count_and_history() {
+        let mut profiler = FrameProfiler::new(10);
+        assert_eq!(profiler.frame_count(), 0);
+        assert_eq!(profiler.history_len(), 0);
+        profiler.begin_frame();
+        profiler.end_frame();
+        assert_eq!(profiler.frame_count(), 1);
+        assert_eq!(profiler.history_len(), 1);
     }
 }
