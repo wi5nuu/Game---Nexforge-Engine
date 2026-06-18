@@ -210,6 +210,10 @@ impl NetEngine {
 
     pub fn start_server(&mut self) { self.is_server = true; }
 
+    pub fn set_tick_rate(&mut self, rate: u32) { self.tick_rate = rate; }
+
+    pub fn is_server(&self) -> bool { self.is_server }
+
     pub fn connect(&mut self, _address: &str) -> Result<(), NetError> {
         // WebRTC/UDP connection placeholder
         self.initialized = true;
@@ -401,5 +405,21 @@ mod tests {
         assert_eq!(rm.snapshot_count(), 0);
         rm.save_snapshot(WorldSnapshot { frame: 1, entities: vec![] });
         assert_eq!(rm.snapshot_count(), 1);
+    }
+
+    #[test]
+    fn test_net_engine_tick_rate() {
+        let mut engine = NetEngine::new();
+        assert_eq!(engine.tick_rate, 60);
+        engine.set_tick_rate(30);
+        assert_eq!(engine.tick_rate, 30);
+    }
+
+    #[test]
+    fn test_net_engine_is_server() {
+        let mut engine = NetEngine::new();
+        assert!(!engine.is_server());
+        engine.start_server();
+        assert!(engine.is_server());
     }
 }
