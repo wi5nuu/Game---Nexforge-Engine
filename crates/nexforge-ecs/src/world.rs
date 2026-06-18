@@ -436,6 +436,12 @@ impl World {
         let mut cmd = std::mem::take(&mut self.command_buffer);
         cmd.apply(self);
     }
+
+    pub fn clear_all(&mut self) {
+        self.archetypes.clear();
+        self.entity_to_archetype.clear();
+        self.command_buffer = CommandBuffer::new();
+    }
 }
 
 impl Default for World {
@@ -576,5 +582,16 @@ mod tests {
         assert_eq!(world.entity_count(), 1);
         world.despawn(e3);
         assert_eq!(world.entity_count(), 0);
+    }
+
+    #[test]
+    fn test_clear_all() {
+        let mut world = World::new();
+        world.spawn(Pos { x: 1.0, y: 2.0 });
+        world.spawn(Pos { x: 3.0, y: 4.0 });
+        assert_eq!(world.entity_count(), 2);
+        world.clear_all();
+        assert_eq!(world.entity_count(), 0);
+        assert_eq!(world.archetype_count(), 0);
     }
 }
