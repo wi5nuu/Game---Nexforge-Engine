@@ -177,6 +177,14 @@ impl AudioEngine {
         }
     }
 
+    pub fn num_active_sources(&self) -> usize {
+        self.buses.iter().map(|b| b.sources.len()).sum()
+    }
+
+    pub fn get_master_volume(&self) -> f32 {
+        self.master_volume
+    }
+
     pub fn set_bus_volume(&mut self, bus: AudioBus, volume: f32) {
         self.buses[bus.index()].volume = volume.clamp(0.0, 1.0);
     }
@@ -310,5 +318,29 @@ mod tests {
         let clip = AudioClip::sine_wave(440.0, 0.1, 44100);
         engine.play_3d(clip, [5.0, 0.0, 0.0], AudioBus::Sfx);
         assert_eq!(engine.buses[AudioBus::Sfx.index()].sources.len(), 1);
+    }
+
+    #[test]
+    fn test_num_active_sources() {
+        let mut engine = AudioEngine::new();
+        assert_eq!(engine.num_active_sources(), 0);
+        let clip = AudioClip::sine_wave(440.0, 0.1, 44100);
+        engine.play(clip, AudioBus::Sfx);
+        assert_eq!(engine.num_active_sources(), 1);
+    }
+
+    #[test]
+    fn test_get_master_volume() {
+        let engine = AudioEngine::new();
+        assert!((engine.get_master_volume() - 1.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_channel_volume_clamp() {
+        let mut engine = AudioEngine::new();
+        engine.set_bus_volume(AudioBus::Music, 1.5);
+        assert!((engine.buses[AudioBus::Music.index()].volume - 1.0).abs() < f32::EPSILON);
+        engine.set_bus_volume(AudioBus::Music, -0.5);
+        assert!((engine.buses[AudioBus::Music.index()].volume).abs() < f32::EPSILON);
     }
 }
