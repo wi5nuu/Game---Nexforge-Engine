@@ -25,6 +25,14 @@ impl DebugInfo {
         Self { fps: 0.0, entity_count: 0, frame_count: 0, last_fps_update: std::time::Instant::now(), fps_frame_count: 0 }
     }
 
+    fn reset(&mut self) {
+        self.fps = 0.0;
+        self.entity_count = 0;
+        self.frame_count = 0;
+        self.last_fps_update = std::time::Instant::now();
+        self.fps_frame_count = 0;
+    }
+
     fn update(&mut self, entity_count: usize) {
         self.frame_count += 1;
         self.fps_frame_count += 1;
