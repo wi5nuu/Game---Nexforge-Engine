@@ -2,6 +2,8 @@
 
 use std::collections::HashMap;
 
+type CommandMap = HashMap<String, Box<dyn Fn(&[&str]) -> String>>;
+
 pub struct DevConsole {
     pub visible: bool,
     pub input_buffer: String,
@@ -9,7 +11,7 @@ pub struct DevConsole {
     pub history_index: usize,
     pub output_lines: Vec<ConsoleLine>,
     pub max_lines: usize,
-    pub commands: HashMap<String, Box<dyn Fn(&[&str]) -> String>>,
+    pub commands: CommandMap,
 }
 
 #[derive(Debug, Clone)]
@@ -47,7 +49,9 @@ impl DevConsole {
 
     pub fn submit(&mut self) {
         let input = self.input_buffer.trim().to_string();
-        if input.is_empty() { return; }
+        if input.is_empty() {
+            return;
+        }
 
         self.history.push(input.clone());
         self.history_index = self.history.len();
@@ -56,7 +60,9 @@ impl DevConsole {
         self.log(&format!("> {}", input), LogLevel::Debug);
 
         let parts: Vec<&str> = input.split_whitespace().collect();
-        if parts.is_empty() { return; }
+        if parts.is_empty() {
+            return;
+        }
 
         let cmd = parts[0];
         let args = &parts[1..];
@@ -65,19 +71,27 @@ impl DevConsole {
             let result = handler(args);
             self.log(&result, LogLevel::Info);
         } else {
-            self.log(&format!("Unknown command: {}. Type 'help' for commands.", cmd), LogLevel::Error);
+            self.log(
+                &format!("Unknown command: {}. Type 'help' for commands.", cmd),
+                LogLevel::Error,
+            );
         }
     }
 
     pub fn log(&mut self, text: &str, level: LogLevel) {
-        self.output_lines.push(ConsoleLine { text: text.to_string(), level });
+        self.output_lines.push(ConsoleLine {
+            text: text.to_string(),
+            level,
+        });
         if self.output_lines.len() > self.max_lines {
             self.output_lines.remove(0);
         }
     }
 
     pub fn history_up(&mut self) {
-        if self.history.is_empty() { return; }
+        if self.history.is_empty() {
+            return;
+        }
         if self.history_index > 0 {
             self.history_index -= 1;
         }
@@ -107,67 +121,108 @@ impl DevConsole {
                 .to_string()
         });
 
-        self.register_command("clear", |_| { "".to_string() });
-        self.register_command("entities", |_| { "Entity list: (stub)".to_string() });
-        self.register_command("fps", |_| { "FPS: 60.0 (stub)".to_string() });
+        self.register_command("clear", |_| "".to_string());
+        self.register_command("entities", |_| "Entity list: (stub)".to_string());
+        self.register_command("fps", |_| "FPS: 60.0 (stub)".to_string());
         self.register_command("stats", |_| {
-            "=== Performance Stats ===\nFrame time: 16.6ms\nDraw calls: 0\nEntities: 0\nTriangles: 0"
-                .to_string()
+            "=== Performance Stats ===\nFrame time: 16.6ms\nDraw calls: 0\nEntities: 0\nTriangles: 0".to_string()
         });
 
-        self.register_command("god", |_| { "God mode: ON".to_string() });
+        self.register_command("god", |_| "God mode: ON".to_string());
 
         self.register_command("spawn", |args| {
-            if args.is_empty() { return "Usage: spawn <type>".to_string(); }
+            if args.is_empty() {
+                return "Usage: spawn <type>".to_string();
+            }
             format!("Spawned: {}", args.join(" "))
         });
 
         self.register_command("tp", |args| {
-            if args.len() < 3 { return "Usage: tp <x> <y> <z>".to_string(); }
+            if args.len() < 3 {
+                return "Usage: tp <x> <y> <z>".to_string();
+            }
             format!("Teleported to ({}, {}, {})", args[0], args[1], args[2])
         });
 
         self.register_command("gravity", |args| {
-            if args.is_empty() { return "Usage: gravity <value>".to_string(); }
+            if args.is_empty() {
+                return "Usage: gravity <value>".to_string();
+            }
             format!("Gravity set to: {}", args[0])
         });
 
         self.register_command("time", |args| {
-            if args.is_empty() { return "Usage: time <scale>".to_string(); }
+            if args.is_empty() {
+                return "Usage: time <scale>".to_string();
+            }
             format!("Time scale set to: {}", args[0])
         });
 
-        self.register_command("exit", |_| { "Exiting console...".to_string() });
-        self.register_command("echo", |args| format!("{}", args.join(" ")));
+        self.register_command("exit", |_| "Exiting console...".to_string());
+        self.register_command("echo", |args| args.join(" "));
         self.register_command("teleport", |args| {
-            if args.len() < 3 { return "Usage: teleport <x> <y> <z>".to_string(); }
+            if args.len() < 3 {
+                return "Usage: teleport <x> <y> <z>".to_string();
+            }
             format!("Teleported to ({}, {}, {})", args[0], args[1], args[2])
         });
         self.register_command("give", |args| {
-            if args.is_empty() { return "Usage: give <item> [amount]".to_string(); }
+            if args.is_empty() {
+                return "Usage: give <item> [amount]".to_string();
+            }
             format!("Gave {} x {}", args.get(1).unwrap_or(&"1"), args[0])
         });
         self.register_command("kill", |args| {
-            if args.is_empty() { return "Usage: kill <entity_id>".to_string(); }
+            if args.is_empty() {
+                return "Usage: kill <entity_id>".to_string();
+            }
             format!("Killed entity {}", args[0])
         });
         self.register_command("heal", |args| {
-            if args.is_empty() { return "Usage: heal <amount>".to_string(); }
+            if args.is_empty() {
+                return "Usage: heal <amount>".to_string();
+            }
             format!("Healed for {}", args[0])
         });
         self.register_command("set", |args| {
-            if args.len() < 2 { return "Usage: set <variable> <value>".to_string(); }
+            if args.len() < 2 {
+                return "Usage: set <variable> <value>".to_string();
+            }
             format!("Set {} = {}", args[0], args[1])
         });
         self.register_command("get", |args| {
-            if args.is_empty() { return "Usage: get <variable>".to_string(); }
+            if args.is_empty() {
+                return "Usage: get <variable>".to_string();
+            }
             format!("{} = ?", args[0])
         });
     }
 
+    pub fn input_len(&self) -> usize {
+        self.input_buffer.len()
+    }
+
+    pub fn output_line_count(&self) -> usize {
+        self.output_lines.len()
+    }
+
+    pub fn set_max_lines(&mut self, max: usize) {
+        self.max_lines = max;
+    }
+
+    pub fn history_len(&self) -> usize {
+        self.history.len()
+    }
+
+    pub fn clear_log(&mut self) {
+        self.output_lines.clear();
+    }
+
     pub fn execute(&mut self, command: &str) -> String {
         let parts: Vec<&str> = command.split_whitespace().collect();
-        if parts.is_empty() { return String::new(); }
+        if parts.is_empty() {
+            return String::new();
+        }
         match self.commands.get(parts[0]) {
             Some(handler) => handler(&parts[1..]),
             None => format!("Unknown command: {}", parts[0]),
@@ -190,7 +245,9 @@ impl DevConsole {
 }
 
 impl Default for DevConsole {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]
@@ -269,10 +326,73 @@ mod tests {
     #[test]
     fn test_custom_command() {
         let mut console = DevConsole::new();
-        console.register_command("hello", |args| {
-            format!("Hello, {}!", args.first().unwrap_or(&"world"))
-        });
+        console.register_command("hello", |args| format!("Hello, {}!", args.first().unwrap_or(&"world")));
         let result = console.execute("hello agent");
         assert_eq!(result, "Hello, agent!");
+    }
+
+    #[test]
+    fn test_clear_log() {
+        let mut console = DevConsole::new();
+        console.log("test", LogLevel::Info);
+        assert_eq!(console.output_lines.len(), 1);
+        console.clear_log();
+        assert!(console.output_lines.is_empty());
+    }
+
+    #[test]
+    fn test_toggle_console() {
+        let mut console = DevConsole::new();
+        assert!(!console.visible);
+        console.toggle();
+        assert!(console.visible);
+        console.toggle();
+        assert!(!console.visible);
+    }
+
+    #[test]
+    fn test_render_text() {
+        let mut console = DevConsole::new();
+        console.log("info msg", LogLevel::Info);
+        console.log("warn msg", LogLevel::Warning);
+        let text = console.render_text();
+        assert!(text.contains("info msg"));
+        assert!(text.contains("[WARN] warn msg"));
+    }
+
+    #[test]
+    fn test_input_len() {
+        let mut console = DevConsole::new();
+        assert_eq!(console.input_len(), 0);
+        console.input_buffer = "hello".to_string();
+        assert_eq!(console.input_len(), 5);
+    }
+
+    #[test]
+    fn test_output_line_count() {
+        let mut console = DevConsole::new();
+        assert_eq!(console.output_line_count(), 0);
+        console.log("line1", LogLevel::Info);
+        console.log("line2", LogLevel::Error);
+        assert_eq!(console.output_line_count(), 2);
+        console.clear_log();
+        assert_eq!(console.output_line_count(), 0);
+    }
+
+    #[test]
+    fn test_set_max_lines() {
+        let mut console = DevConsole::new();
+        assert_eq!(console.max_lines, 100);
+        console.set_max_lines(50);
+        assert_eq!(console.max_lines, 50);
+    }
+
+    #[test]
+    fn test_history_len() {
+        let mut console = DevConsole::new();
+        assert_eq!(console.history_len(), 0);
+        console.input_buffer = "test".to_string();
+        console.submit();
+        assert_eq!(console.history_len(), 1);
     }
 }

@@ -25,7 +25,22 @@ impl ShadowMap {
                 texture_size: resolution,
             });
         }
-        Self { resolution, cascade_count, split_lambda: 0.5, cascades, bias: 0.005, normal_bias: 0.02 }
+        Self {
+            resolution,
+            cascade_count,
+            split_lambda: 0.5,
+            cascades,
+            bias: 0.005,
+            normal_bias: 0.02,
+        }
+    }
+
+    pub fn set_resolution(&mut self, res: u32) {
+        self.resolution = res;
+    }
+
+    pub fn set_split_lambda(&mut self, lambda: f32) {
+        self.split_lambda = lambda.clamp(0.0, 1.0);
     }
 
     pub fn compute_splits(&mut self, near: f32, far: f32) {
@@ -39,7 +54,9 @@ impl ShadowMap {
 }
 
 impl Default for ShadowMap {
-    fn default() -> Self { Self::new(2048, 4) }
+    fn default() -> Self {
+        Self::new(2048, 4)
+    }
 }
 
 #[cfg(test)]
@@ -58,5 +75,14 @@ mod tests {
         let mut shadow = ShadowMap::new(1024, 3);
         shadow.compute_splits(0.1, 100.0);
         assert_eq!(shadow.cascades.len(), 3);
+    }
+
+    #[test]
+    fn test_shadow_setters() {
+        let mut shadow = ShadowMap::new(1024, 3);
+        shadow.set_resolution(4096);
+        assert_eq!(shadow.resolution, 4096);
+        shadow.set_split_lambda(0.7);
+        assert!((shadow.split_lambda - 0.7).abs() < f32::EPSILON);
     }
 }

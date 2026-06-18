@@ -1,6 +1,6 @@
 #![deny(clippy::all)]
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -35,11 +35,19 @@ pub struct MemoryStats {
 
 impl MemoryStats {
     pub fn new() -> Self {
-        Self { heap_used_bytes: 0, vram_used_bytes: 0, total_allocations: 0 }
+        Self {
+            heap_used_bytes: 0,
+            vram_used_bytes: 0,
+            total_allocations: 0,
+        }
     }
 }
 
-impl Default for MemoryStats { fn default() -> Self { Self::new() } }
+impl Default for MemoryStats {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 pub struct ScopedTimer {
     name: String,
@@ -53,7 +61,11 @@ impl ScopedTimer {
         if let Some(ref p) = profiler {
             p.borrow_mut().begin_sample(name, start);
         }
-        Self { name: name.to_string(), start, profiler }
+        Self {
+            name: name.to_string(),
+            start,
+            profiler,
+        }
     }
 }
 
@@ -93,6 +105,10 @@ impl FrameProfiler {
         }
     }
 
+    pub fn is_visible(&self) -> bool {
+        self.visible
+    }
+
     pub fn toggle(&mut self) {
         self.visible = !self.visible;
     }
@@ -104,9 +120,7 @@ impl FrameProfiler {
     }
 
     pub fn end_frame(&mut self) {
-        let elapsed = self.frame_start
-            .map(|s| s.elapsed())
-            .unwrap_or(Duration::ZERO);
+        let elapsed = self.frame_start.map(|s| s.elapsed()).unwrap_or(Duration::ZERO);
 
         let frame = ProfileFrame {
             frame: self.current_frame,
@@ -155,11 +169,15 @@ impl FrameProfiler {
 
     fn update_overlay(&mut self) {
         let last = self.frame_history.last();
-        let fps = last.map(|f| {
-            if f.total_duration_ns > 0 {
-                (1_000_000_000.0 / f.total_duration_ns as f64) as u32
-            } else { 0 }
-        }).unwrap_or(0);
+        let fps = last
+            .map(|f| {
+                if f.total_duration_ns > 0 {
+                    (1_000_000_000.0 / f.total_duration_ns as f64) as u32
+                } else {
+                    0
+                }
+            })
+            .unwrap_or(0);
 
         let total_ms = last.map(|f| f.total_duration_ns as f64 / 1_000_000.0).unwrap_or(0.0);
 
@@ -169,7 +187,9 @@ impl FrameProfiler {
                 let ms = sample.duration_ns as f64 / 1_000_000.0;
                 let pct = if frame.total_duration_ns > 0 {
                     (sample.duration_ns as f64 / frame.total_duration_ns as f64) * 100.0
-                } else { 0.0 };
+                } else {
+                    0.0
+                };
                 breakdown.push_str(&format!("\n  {}: {:.2}ms ({:.1}%)", sample.name, ms, pct));
             }
         }
@@ -179,7 +199,10 @@ impl FrameProfiler {
              Frame {} | FPS: {} | Total: {:.2}ms{}\n\
              GPU Timestamps: {}\n\
              Memory: heap={}MB vram={}MB allocs={}",
-            self.current_frame, fps, total_ms, breakdown,
+            self.current_frame,
+            fps,
+            total_ms,
+            breakdown,
             self.current_gpu.len(),
             self.memory_stats.heap_used_bytes / 1_000_000,
             self.memory_stats.vram_used_bytes / 1_000_000,
@@ -192,36 +215,66 @@ impl FrameProfiler {
     }
 
     pub fn average_frame_time_ms(&self) -> f64 {
-        if self.frame_history.is_empty() { return 0.0; }
+        if self.frame_history.is_empty() {
+            return 0.0;
+        }
         let sum: u64 = self.frame_history.iter().map(|f| f.total_duration_ns).sum();
         (sum as f64 / self.frame_history.len() as f64) / 1_000_000.0
     }
 
     pub fn min_frame_time_ms(&self) -> f64 {
-        self.frame_history.iter()
+        self.frame_history
+            .iter()
             .map(|f| f.total_duration_ns as f64 / 1_000_000.0)
             .fold(f64::MAX, |a, b| a.min(b))
     }
 
     pub fn max_frame_time_ms(&self) -> f64 {
-        self.frame_history.iter()
+        self.frame_history
+            .iter()
             .map(|f| f.total_duration_ns as f64 / 1_000_000.0)
             .fold(f64::MIN, |a, b| a.max(b))
     }
 
+    pub fn frame_count(&self) -> u64 {
+        self.current_frame
+    }
+
+    pub fn history_len(&self) -> usize {
+        self.frame_history.len()
+    }
+
+    pub fn set_max_history(&mut self, max: usize) {
+        self.max_history = max;
+    }
+
+    pub fn reset(&mut self) {
+        self.frame_history.clear();
+        self.current_samples.clear();
+        self.current_gpu.clear();
+        self.current_frame = 0;
+        self.overlay_text.clear();
+    }
+
     pub fn p99_frame_time_ms(&self) -> f64 {
-        let mut times: Vec<f64> = self.frame_history.iter()
+        let mut times: Vec<f64> = self
+            .frame_history
+            .iter()
             .map(|f| f.total_duration_ns as f64 / 1_000_000.0)
             .collect();
         times.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        if times.is_empty() { return 0.0; }
+        if times.is_empty() {
+            return 0.0;
+        }
         let idx = ((times.len() as f64) * 0.99) as usize;
         times[idx.min(times.len() - 1)]
     }
 }
 
 impl Default for FrameProfiler {
-    fn default() -> Self { Self::new(256) }
+    fn default() -> Self {
+        Self::new(256)
+    }
 }
 
 #[cfg(test)]
@@ -308,5 +361,53 @@ mod tests {
         profiler.end_frame();
         assert!(profiler.overlay_text.contains("FPS"));
         assert!(profiler.overlay_text.contains("Nexforge Profiler"));
+    }
+
+    #[test]
+    fn test_reset() {
+        let mut profiler = FrameProfiler::new(128);
+        profiler.begin_frame();
+        profiler.end_frame();
+        assert_eq!(profiler.frame_history.len(), 1);
+        profiler.reset();
+        assert!(profiler.frame_history.is_empty());
+        assert_eq!(profiler.current_frame, 0);
+    }
+
+    #[test]
+    fn test_visible_property() {
+        let mut profiler = FrameProfiler::new(128);
+        assert!(!profiler.visible);
+        profiler.toggle();
+        assert!(profiler.visible);
+        profiler.toggle();
+        assert!(!profiler.visible);
+    }
+
+    #[test]
+    fn test_frame_count_and_history() {
+        let mut profiler = FrameProfiler::new(10);
+        assert_eq!(profiler.frame_count(), 0);
+        assert_eq!(profiler.history_len(), 0);
+        profiler.begin_frame();
+        profiler.end_frame();
+        assert_eq!(profiler.frame_count(), 1);
+        assert_eq!(profiler.history_len(), 1);
+    }
+
+    #[test]
+    fn test_set_max_history() {
+        let mut profiler = FrameProfiler::new(10);
+        assert_eq!(profiler.max_history, 10);
+        profiler.set_max_history(100);
+        assert_eq!(profiler.max_history, 100);
+    }
+
+    #[test]
+    fn test_profiler_is_visible() {
+        let mut profiler = FrameProfiler::new(128);
+        assert!(!profiler.is_visible());
+        profiler.toggle();
+        assert!(profiler.is_visible());
     }
 }

@@ -1,7 +1,7 @@
 #![deny(clippy::all)]
 
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Error)]
 pub enum NetError {
@@ -34,8 +34,21 @@ pub struct PlayerInput {
 
 impl PlayerInput {
     pub fn new() -> Self {
-        Self { frame: 0, forward: false, backward: false, left: false, right: false, jump: false,
-            shoot: false, reload: false, sprint: false, crouch: false, mouse_x: 0.0, mouse_y: 0.0, sequence: 0 }
+        Self {
+            frame: 0,
+            forward: false,
+            backward: false,
+            left: false,
+            right: false,
+            jump: false,
+            shoot: false,
+            reload: false,
+            sprint: false,
+            crouch: false,
+            mouse_x: 0.0,
+            mouse_y: 0.0,
+            sequence: 0,
+        }
     }
 
     pub fn serialize(&self) -> Result<Vec<u8>, NetError> {
@@ -46,16 +59,33 @@ impl PlayerInput {
         bincode::deserialize(data).map_err(|e| NetError::SerializationError(e.to_string()))
     }
 
+    pub fn set_sequence(&mut self, seq: u32) {
+        self.sequence = seq;
+    }
+
     pub fn delta(&self, base: &PlayerInput) -> Vec<u8> {
         let mut delta = Vec::new();
-        if self.forward != base.forward { delta.push(1); delta.push(self.forward as u8); }
-        if self.shoot != base.shoot { delta.push(2); delta.push(self.shoot as u8); }
-        if (self.mouse_x - base.mouse_x).abs() > 0.001 { delta.push(3); delta.extend(&self.mouse_x.to_le_bytes()); }
+        if self.forward != base.forward {
+            delta.push(1);
+            delta.push(self.forward as u8);
+        }
+        if self.shoot != base.shoot {
+            delta.push(2);
+            delta.push(self.shoot as u8);
+        }
+        if (self.mouse_x - base.mouse_x).abs() > 0.001 {
+            delta.push(3);
+            delta.extend(&self.mouse_x.to_le_bytes());
+        }
         delta
     }
 }
 
-impl Default for PlayerInput { fn default() -> Self { Self::new() } }
+impl Default for PlayerInput {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorldSnapshot {
@@ -78,10 +108,17 @@ pub struct InputBuffer {
 }
 
 impl InputBuffer {
-    pub fn new(max_size: usize) -> Self { Self { inputs: Vec::new(), max_size } }
+    pub fn new(max_size: usize) -> Self {
+        Self {
+            inputs: Vec::new(),
+            max_size,
+        }
+    }
 
     pub fn push(&mut self, input: PlayerInput) {
-        if self.inputs.len() >= self.max_size { self.inputs.remove(0); }
+        if self.inputs.len() >= self.max_size {
+            self.inputs.remove(0);
+        }
         self.inputs.push(input);
     }
 
@@ -89,9 +126,25 @@ impl InputBuffer {
         self.inputs.iter().find(|i| i.frame == frame)
     }
 
-    pub fn latest_frame(&self) -> u32 { self.inputs.last().map(|i| i.frame).unwrap_or(0) }
+    pub fn latest_frame(&self) -> u32 {
+        self.inputs.last().map(|i| i.frame).unwrap_or(0)
+    }
 
-    pub fn clear(&mut self) { self.inputs.clear(); }
+    pub fn clear(&mut self) {
+        self.inputs.clear();
+    }
+
+    pub fn capacity(&self) -> usize {
+        self.max_size
+    }
+
+    pub fn len(&self) -> usize {
+        self.inputs.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.inputs.is_empty()
+    }
 }
 
 pub struct RollbackManager {
@@ -105,12 +158,20 @@ pub struct RollbackManager {
 
 impl RollbackManager {
     pub fn new() -> Self {
-        Self { current_frame: 0, max_prediction: 8, input_buffer: InputBuffer::new(256),
-            snapshots: Vec::new(), max_snapshots: 128, local_player_id: 0 }
+        Self {
+            current_frame: 0,
+            max_prediction: 8,
+            input_buffer: InputBuffer::new(256),
+            snapshots: Vec::new(),
+            max_snapshots: 128,
+            local_player_id: 0,
+        }
     }
 
     pub fn save_snapshot(&mut self, snapshot: WorldSnapshot) {
-        if self.snapshots.len() >= self.max_snapshots { self.snapshots.remove(0); }
+        if self.snapshots.len() >= self.max_snapshots {
+            self.snapshots.remove(0);
+        }
         self.snapshots.push(snapshot);
     }
 
@@ -119,36 +180,59 @@ impl RollbackManager {
     }
 
     pub fn rollback(&mut self, target_frame: u32) -> Result<Option<WorldSnapshot>, NetError> {
-        if target_frame >= self.current_frame { return Ok(None); }
-        let snapshot = self.find_snapshot(target_frame)
-            .ok_or(NetError::RollbackMismatch)?;
+        if target_frame >= self.current_frame {
+            return Ok(None);
+        }
+        let snapshot = self.find_snapshot(target_frame).ok_or(NetError::RollbackMismatch)?;
         Ok(Some(snapshot.clone()))
     }
 
-    pub fn advance_frame(&mut self) { self.current_frame += 1; }
+    pub fn advance_frame(&mut self) {
+        self.current_frame += 1;
+    }
+
+    pub fn snapshot_count(&self) -> usize {
+        self.snapshots.len()
+    }
 
     pub fn predict(&self, snapshot: &WorldSnapshot, inputs: &[PlayerInput]) -> WorldSnapshot {
         let mut predicted = snapshot.clone();
         for input in inputs {
-            if input.frame <= snapshot.frame { continue; }
+            if input.frame <= snapshot.frame {
+                continue;
+            }
             for entity in &mut predicted.entities {
-                if input.forward { entity.position[2] -= 0.1; }
-                if input.backward { entity.position[2] += 0.1; }
-                if input.left { entity.position[0] -= 0.1; }
-                if input.right { entity.position[0] += 0.1; }
+                if input.forward {
+                    entity.position[2] -= 0.1;
+                }
+                if input.backward {
+                    entity.position[2] += 0.1;
+                }
+                if input.left {
+                    entity.position[0] -= 0.1;
+                }
+                if input.right {
+                    entity.position[0] += 0.1;
+                }
             }
         }
         predicted
     }
 }
 
-impl Default for RollbackManager { fn default() -> Self { Self::new() } }
+impl Default for RollbackManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 // Delta compression
 pub struct DeltaCompressor;
 
 impl DeltaCompressor {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 
     pub fn compress(previous: &WorldSnapshot, current: &WorldSnapshot) -> Vec<u8> {
         let mut data = Vec::new();
@@ -178,7 +262,11 @@ impl DeltaCompressor {
     }
 }
 
-impl Default for DeltaCompressor { fn default() -> Self { Self::new() } }
+impl Default for DeltaCompressor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 pub struct NetEngine {
     pub rollback: RollbackManager,
@@ -191,8 +279,14 @@ pub struct NetEngine {
 
 impl NetEngine {
     pub fn new() -> Self {
-        Self { rollback: RollbackManager::new(), delta: DeltaCompressor::new(),
-            tick_rate: 60, is_server: false, ping: 0.0, initialized: false }
+        Self {
+            rollback: RollbackManager::new(),
+            delta: DeltaCompressor::new(),
+            tick_rate: 60,
+            is_server: false,
+            ping: 0.0,
+            initialized: false,
+        }
     }
 
     pub fn initialize(&mut self) -> Result<(), NetError> {
@@ -200,7 +294,17 @@ impl NetEngine {
         Ok(())
     }
 
-    pub fn start_server(&mut self) { self.is_server = true; }
+    pub fn start_server(&mut self) {
+        self.is_server = true;
+    }
+
+    pub fn set_tick_rate(&mut self, rate: u32) {
+        self.tick_rate = rate;
+    }
+
+    pub fn is_server(&self) -> bool {
+        self.is_server
+    }
 
     pub fn connect(&mut self, _address: &str) -> Result<(), NetError> {
         // WebRTC/UDP connection placeholder
@@ -209,7 +313,9 @@ impl NetEngine {
     }
 
     pub fn send_input(&mut self, input: PlayerInput) -> Result<(), NetError> {
-        if !self.initialized { return Err(NetError::NotConnected); }
+        if !self.initialized {
+            return Err(NetError::NotConnected);
+        }
         let _data = input.serialize()?;
         self.rollback.input_buffer.push(input);
         // Send over WebRTC/UDP — placeholder
@@ -217,8 +323,8 @@ impl NetEngine {
     }
 
     pub fn receive_snapshot(&mut self, data: &[u8]) -> Result<WorldSnapshot, NetError> {
-        let snapshot: WorldSnapshot = bincode::deserialize(data)
-            .map_err(|e| NetError::SerializationError(e.to_string()))?;
+        let snapshot: WorldSnapshot =
+            bincode::deserialize(data).map_err(|e| NetError::SerializationError(e.to_string()))?;
         self.rollback.save_snapshot(snapshot.clone());
         Ok(snapshot)
     }
@@ -227,10 +333,16 @@ impl NetEngine {
         self.rollback.advance_frame();
     }
 
-    pub fn is_initialized(&self) -> bool { self.initialized }
+    pub fn is_initialized(&self) -> bool {
+        self.initialized
+    }
 }
 
-impl Default for NetEngine { fn default() -> Self { Self::new() } }
+impl Default for NetEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -246,7 +358,12 @@ mod tests {
 
     #[test]
     fn test_input_serialization() {
-        let input = PlayerInput { forward: true, shoot: true, frame: 42, ..Default::default() };
+        let input = PlayerInput {
+            forward: true,
+            shoot: true,
+            frame: 42,
+            ..Default::default()
+        };
         let data = input.serialize().unwrap();
         let deserialized = PlayerInput::deserialize(&data).unwrap();
         assert_eq!(input, deserialized);
@@ -256,7 +373,10 @@ mod tests {
     fn test_input_buffer() {
         let mut buf = InputBuffer::new(10);
         for i in 0..5 {
-            buf.push(PlayerInput { frame: i, ..Default::default() });
+            buf.push(PlayerInput {
+                frame: i,
+                ..Default::default()
+            });
         }
         assert_eq!(buf.latest_frame(), 4);
         assert!(buf.get(2).is_some());
@@ -266,7 +386,10 @@ mod tests {
     #[test]
     fn test_rollback_save_and_find() {
         let mut rm = RollbackManager::new();
-        let snap = WorldSnapshot { frame: 10, entities: vec![] };
+        let snap = WorldSnapshot {
+            frame: 10,
+            entities: vec![],
+        };
         rm.save_snapshot(snap.clone());
         assert!(rm.find_snapshot(10).is_some());
     }
@@ -283,11 +406,23 @@ mod tests {
     fn test_delta_compression() {
         let prev = WorldSnapshot {
             frame: 1,
-            entities: vec![EntitySnapshot { id: 0, position: [0.0; 3], rotation: [0.0; 4], velocity: [0.0; 3], health: 100.0 }],
+            entities: vec![EntitySnapshot {
+                id: 0,
+                position: [0.0; 3],
+                rotation: [0.0; 4],
+                velocity: [0.0; 3],
+                health: 100.0,
+            }],
         };
         let current = WorldSnapshot {
             frame: 2,
-            entities: vec![EntitySnapshot { id: 0, position: [1.0, 0.0, 0.0], rotation: [0.0; 4], velocity: [0.0; 3], health: 80.0 }],
+            entities: vec![EntitySnapshot {
+                id: 0,
+                position: [1.0, 0.0, 0.0],
+                rotation: [0.0; 4],
+                velocity: [0.0; 3],
+                health: 80.0,
+            }],
         };
         let compressed = DeltaCompressor::compress(&prev, &current);
         assert!(!compressed.is_empty());
@@ -295,19 +430,34 @@ mod tests {
 
     #[test]
     fn test_prediction() {
-        let mut rm = RollbackManager::new();
+        let rm = RollbackManager::new();
         let snapshot = WorldSnapshot {
             frame: 0,
-            entities: vec![EntitySnapshot { id: 0, position: [0.0; 3], rotation: [0.0; 4], velocity: [0.0; 3], health: 100.0 }],
+            entities: vec![EntitySnapshot {
+                id: 0,
+                position: [0.0; 3],
+                rotation: [0.0; 4],
+                velocity: [0.0; 3],
+                health: 100.0,
+            }],
         };
-        let inputs = vec![PlayerInput { frame: 1, forward: true, ..Default::default() }];
+        let inputs = vec![PlayerInput {
+            frame: 1,
+            forward: true,
+            ..Default::default()
+        }];
         let predicted = rm.predict(&snapshot, &inputs);
         assert_eq!(predicted.entities[0].position[2], -0.1);
     }
 
     #[test]
     fn test_player_input_serialization() {
-        let input = PlayerInput { frame: 42, forward: true, shoot: true, ..Default::default() };
+        let input = PlayerInput {
+            frame: 42,
+            forward: true,
+            shoot: true,
+            ..Default::default()
+        };
         let bytes = input.serialize().unwrap();
         let decoded = PlayerInput::deserialize(&bytes).unwrap();
         assert_eq!(decoded.frame, 42);
@@ -319,7 +469,10 @@ mod tests {
     fn test_input_buffer_ring() {
         let mut buffer = InputBuffer::new(64);
         for i in 0..5 {
-            buffer.push(PlayerInput { frame: i, ..Default::default() });
+            buffer.push(PlayerInput {
+                frame: i,
+                ..Default::default()
+            });
         }
         assert_eq!(buffer.latest_frame(), 4);
     }
@@ -327,7 +480,11 @@ mod tests {
     #[test]
     fn test_input_buffer_get() {
         let mut buffer = InputBuffer::new(64);
-        buffer.push(PlayerInput { frame: 10, forward: true, ..Default::default() });
+        buffer.push(PlayerInput {
+            frame: 10,
+            forward: true,
+            ..Default::default()
+        });
         let retrieved = buffer.get(10);
         assert!(retrieved.is_some());
         assert!(retrieved.unwrap().forward);
@@ -335,7 +492,10 @@ mod tests {
 
     #[test]
     fn test_delta_compressor_empty() {
-        let snapshot = WorldSnapshot { frame: 0, entities: vec![] };
+        let snapshot = WorldSnapshot {
+            frame: 0,
+            entities: vec![],
+        };
         let compressed = DeltaCompressor::compress(&snapshot, &snapshot);
         assert_eq!(compressed.len(), 4);
     }
@@ -343,9 +503,94 @@ mod tests {
     #[test]
     fn test_rollback_manager_frame_tracking() {
         let mut rm = RollbackManager::new();
-        let snapshot = WorldSnapshot { frame: 0, entities: vec![] };
+        let snapshot = WorldSnapshot {
+            frame: 0,
+            entities: vec![],
+        };
         rm.save_snapshot(snapshot);
         let found = rm.find_snapshot(0);
         assert!(found.is_some());
+    }
+
+    #[test]
+    fn test_net_error_display() {
+        let err = NetError::NotConnected;
+        assert_eq!(format!("{}", err), "Not connected to server");
+    }
+
+    #[test]
+    fn test_player_input_defaults() {
+        let input = PlayerInput::default();
+        assert_eq!(input.frame, 0);
+        assert!(!input.forward);
+        assert!(!input.shoot);
+    }
+
+    #[test]
+    fn test_world_snapshot_creation() {
+        let snap = WorldSnapshot {
+            frame: 5,
+            entities: vec![EntitySnapshot {
+                id: 1,
+                position: [1.0, 2.0, 3.0],
+                rotation: [0.0, 0.0, 0.0, 1.0],
+                velocity: [0.0; 3],
+                health: 100.0,
+            }],
+        };
+        assert_eq!(snap.frame, 5);
+        assert_eq!(snap.entities.len(), 1);
+    }
+
+    #[test]
+    fn test_input_buffer_capacity() {
+        let buf = InputBuffer::new(32);
+        assert_eq!(buf.capacity(), 32);
+        assert!(buf.is_empty());
+    }
+
+    #[test]
+    fn test_input_buffer_len() {
+        let mut buf = InputBuffer::new(10);
+        buf.push(PlayerInput::new());
+        assert_eq!(buf.len(), 1);
+        assert!(!buf.is_empty());
+        buf.clear();
+        assert_eq!(buf.len(), 0);
+    }
+
+    #[test]
+    fn test_rollback_snapshot_count() {
+        let mut rm = RollbackManager::new();
+        assert_eq!(rm.snapshot_count(), 0);
+        rm.save_snapshot(WorldSnapshot {
+            frame: 1,
+            entities: vec![],
+        });
+        assert_eq!(rm.snapshot_count(), 1);
+    }
+
+    #[test]
+    fn test_net_engine_tick_rate() {
+        let mut engine = NetEngine::new();
+        assert_eq!(engine.tick_rate, 60);
+        engine.set_tick_rate(30);
+        assert_eq!(engine.tick_rate, 30);
+    }
+
+    #[test]
+    fn test_net_engine_is_server() {
+        let mut engine = NetEngine::new();
+        assert!(!engine.is_server());
+        engine.start_server();
+        assert!(engine.is_server());
+    }
+
+    #[test]
+    fn test_player_input_set_sequence() {
+        let mut input = PlayerInput::new();
+        assert_eq!(input.sequence, 0);
+        input.set_sequence(42);
+        assert_eq!(input.sequence, 42);
     }
 }

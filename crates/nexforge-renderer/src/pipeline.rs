@@ -1,6 +1,6 @@
-use thiserror::Error;
 use crate::camera::Camera;
 use crate::scene::Scene;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum RenderError {
@@ -31,9 +31,13 @@ pub struct RenderContext<'a> {
 impl<'a> RenderContext<'a> {
     pub fn new(aspect: f32) -> Self {
         Self {
-            surface: None, device: None, queue: None, config: None,
+            surface: None,
+            device: None,
+            queue: None,
+            config: None,
             size: (1920, 1080),
-            depth_texture: None, depth_view: None,
+            depth_texture: None,
+            depth_view: None,
             scene: None,
             camera: Camera::new(aspect),
         }
@@ -42,7 +46,11 @@ impl<'a> RenderContext<'a> {
     fn create_depth_texture(device: &wgpu::Device, width: u32, height: u32) -> (wgpu::Texture, wgpu::TextureView) {
         let texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Depth Texture"),
-            size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
+            size: wgpu::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
@@ -65,22 +73,45 @@ impl<'a> RenderContext<'a> {
             flags: wgpu::InstanceFlags::default(),
             gles_minor_version: wgpu::Gles3MinorVersion::Automatic,
         });
-        self.surface = Some(instance.create_surface(window)
-            .map_err(|e| RenderError::SurfaceError(e.to_string()))?);
-        let surface = self.surface.as_ref()
+        self.surface = Some(
+            instance
+                .create_surface(window)
+                .map_err(|e| RenderError::SurfaceError(e.to_string()))?,
+        );
+        let surface = self
+            .surface
+            .as_ref()
             .ok_or_else(|| RenderError::SurfaceError("Surface not initialized".to_string()))?;
-        let adapter = pollster::block_on(instance.request_adapter(
-            &wgpu::RequestAdapterOptions { power_preference: wgpu::PowerPreference::HighPerformance, force_fallback_adapter: false, compatible_surface: Some(surface) },
-        )).ok_or(RenderError::AdapterCreationFailed)?;
+        let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+            power_preference: wgpu::PowerPreference::HighPerformance,
+            force_fallback_adapter: false,
+            compatible_surface: Some(surface),
+        }))
+        .ok_or(RenderError::AdapterCreationFailed)?;
         let (device, queue) = pollster::block_on(adapter.request_device(
-            &wgpu::DeviceDescriptor { label: Some("Nexforge Device"), required_features: wgpu::Features::empty(), required_limits: wgpu::Limits::default() }, None,
-        )).map_err(|_| RenderError::DeviceCreationFailed)?;
+            &wgpu::DeviceDescriptor {
+                label: Some("Nexforge Device"),
+                required_features: wgpu::Features::empty(),
+                required_limits: wgpu::Limits::default(),
+            },
+            None,
+        ))
+        .map_err(|_| RenderError::DeviceCreationFailed)?;
         let caps = surface.get_capabilities(&adapter);
         let format = caps.formats[0];
-        let present_mode = if caps.present_modes.contains(&wgpu::PresentMode::Mailbox) { wgpu::PresentMode::Mailbox } else { wgpu::PresentMode::Fifo };
+        let present_mode = if caps.present_modes.contains(&wgpu::PresentMode::Mailbox) {
+            wgpu::PresentMode::Mailbox
+        } else {
+            wgpu::PresentMode::Fifo
+        };
         let config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT, format, width, height,
-            present_mode, alpha_mode: caps.alpha_modes[0], view_formats: vec![],
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            format,
+            width,
+            height,
+            present_mode,
+            alpha_mode: caps.alpha_modes[0],
+            view_formats: vec![],
             desired_maximum_frame_latency: 2,
         };
         surface.configure(&device, &config);
@@ -109,9 +140,13 @@ impl<'a> RenderContext<'a> {
         let queue = self.queue.as_ref();
         let depth_view = self.depth_view.as_ref();
         if let (Some(surface), Some(device), Some(queue), Some(depth_view)) = (surface, device, queue, depth_view) {
-            let output = surface.get_current_texture().map_err(|e| RenderError::SurfaceError(e.to_string()))?;
+            let output = surface
+                .get_current_texture()
+                .map_err(|e| RenderError::SurfaceError(e.to_string()))?;
             let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
-            let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("Render Encoder") });
+            let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("Render Encoder"),
+            });
             {
                 let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: Some("Main Pass"),
@@ -119,7 +154,12 @@ impl<'a> RenderContext<'a> {
                         view: &view,
                         resolve_target: None,
                         ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(wgpu::Color { r: 0.02, g: 0.04, b: 0.08, a: 1.0 }),
+                            load: wgpu::LoadOp::Clear(wgpu::Color {
+                                r: 0.02,
+                                g: 0.04,
+                                b: 0.08,
+                                a: 1.0,
+                            }),
                             store: wgpu::StoreOp::Store,
                         },
                     })],
@@ -156,11 +196,15 @@ impl<'a> RenderContext<'a> {
         }
     }
 
-    pub fn is_initialized(&self) -> bool { self.device.is_some() }
+    pub fn is_initialized(&self) -> bool {
+        self.device.is_some()
+    }
 }
 
 impl<'a> Default for RenderContext<'a> {
-    fn default() -> Self { Self::new(16.0 / 9.0) }
+    fn default() -> Self {
+        Self::new(16.0 / 9.0)
+    }
 }
 
 impl<'a> std::fmt::Debug for RenderContext<'a> {

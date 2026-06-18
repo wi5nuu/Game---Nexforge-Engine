@@ -43,24 +43,58 @@ impl Mesh {
             contents: bytemuck::cast_slice(indices),
             usage: wgpu::BufferUsages::INDEX,
         });
-        Self { vertex_buffer, index_buffer, num_indices: indices.len() as u32 }
+        Self {
+            vertex_buffer,
+            index_buffer,
+            num_indices: indices.len() as u32,
+        }
     }
 
     pub fn colored_cube(device: &wgpu::Device) -> Self {
         let vertices = vec![
-            Vertex { position: [-0.5, -0.5, -0.5], color: [1.0, 0.0, 0.0], normal: [0.0, 0.0, -1.0] },
-            Vertex { position: [ 0.5, -0.5, -0.5], color: [0.0, 1.0, 0.0], normal: [0.0, 0.0, -1.0] },
-            Vertex { position: [ 0.5,  0.5, -0.5], color: [0.0, 0.0, 1.0], normal: [0.0, 0.0, -1.0] },
-            Vertex { position: [-0.5,  0.5, -0.5], color: [1.0, 1.0, 0.0], normal: [0.0, 0.0, -1.0] },
-            Vertex { position: [-0.5, -0.5,  0.5], color: [1.0, 0.0, 1.0], normal: [0.0, 0.0, 1.0] },
-            Vertex { position: [ 0.5, -0.5,  0.5], color: [0.0, 1.0, 1.0], normal: [0.0, 0.0, 1.0] },
-            Vertex { position: [ 0.5,  0.5,  0.5], color: [0.5, 0.5, 0.5], normal: [0.0, 0.0, 1.0] },
-            Vertex { position: [-0.5,  0.5,  0.5], color: [1.0, 1.0, 1.0], normal: [0.0, 0.0, 1.0] },
+            Vertex {
+                position: [-0.5, -0.5, -0.5],
+                color: [1.0, 0.0, 0.0],
+                normal: [0.0, 0.0, -1.0],
+            },
+            Vertex {
+                position: [0.5, -0.5, -0.5],
+                color: [0.0, 1.0, 0.0],
+                normal: [0.0, 0.0, -1.0],
+            },
+            Vertex {
+                position: [0.5, 0.5, -0.5],
+                color: [0.0, 0.0, 1.0],
+                normal: [0.0, 0.0, -1.0],
+            },
+            Vertex {
+                position: [-0.5, 0.5, -0.5],
+                color: [1.0, 1.0, 0.0],
+                normal: [0.0, 0.0, -1.0],
+            },
+            Vertex {
+                position: [-0.5, -0.5, 0.5],
+                color: [1.0, 0.0, 1.0],
+                normal: [0.0, 0.0, 1.0],
+            },
+            Vertex {
+                position: [0.5, -0.5, 0.5],
+                color: [0.0, 1.0, 1.0],
+                normal: [0.0, 0.0, 1.0],
+            },
+            Vertex {
+                position: [0.5, 0.5, 0.5],
+                color: [0.5, 0.5, 0.5],
+                normal: [0.0, 0.0, 1.0],
+            },
+            Vertex {
+                position: [-0.5, 0.5, 0.5],
+                color: [1.0, 1.0, 1.0],
+                normal: [0.0, 0.0, 1.0],
+            },
         ];
         let indices: Vec<u16> = vec![
-            0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6,
-            0, 4, 5, 0, 5, 1, 1, 5, 6, 1, 6, 2,
-            2, 6, 7, 2, 7, 3, 3, 7, 4, 3, 4, 0,
+            0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 0, 4, 5, 0, 5, 1, 1, 5, 6, 1, 6, 2, 2, 6, 7, 2, 7, 3, 3, 7, 4, 3, 4, 0,
         ];
         Self::new(device, &vertices, &indices)
     }
@@ -162,7 +196,12 @@ impl MeshRenderer {
             multiview: None,
         });
 
-        Self { render_pipeline, uniform_buffer, bind_group, mesh }
+        Self {
+            render_pipeline,
+            uniform_buffer,
+            bind_group,
+            mesh,
+        }
     }
 
     pub fn update_uniforms(&self, queue: &wgpu::Queue, vp: [[f32; 4]; 4]) {
@@ -172,7 +211,10 @@ impl MeshRenderer {
             [0.0, 0.0, 1.0, 0.0],
             [0.0, 0.0, 0.0, 1.0],
         ];
-        let uniforms = Uniforms { vp_matrix: vp, model_matrix: model };
+        let uniforms = Uniforms {
+            vp_matrix: vp,
+            model_matrix: model,
+        };
         queue.write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&[uniforms]));
     }
 

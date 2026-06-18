@@ -12,22 +12,62 @@ pub struct PbrMaterial {
 
 impl PbrMaterial {
     pub fn new(albedo: [f32; 4], metallic: f32, roughness: f32) -> Self {
-        Self { albedo, metallic, roughness, ao: 1.0, emissive: [0.0; 3], emissive_strength: 0.0, normal_scale: 1.0 }
+        Self {
+            albedo,
+            metallic,
+            roughness,
+            ao: 1.0,
+            emissive: [0.0; 3],
+            emissive_strength: 0.0,
+            normal_scale: 1.0,
+        }
+    }
+
+    pub fn set_roughness(&mut self, r: f32) {
+        self.roughness = r.clamp(0.0, 1.0);
+    }
+
+    pub fn set_metallic(&mut self, m: f32) {
+        self.metallic = m.clamp(0.0, 1.0);
+    }
+
+    pub fn set_albedo(&mut self, r: f32, g: f32, b: f32, a: f32) {
+        self.albedo = [r, g, b, a];
     }
 
     pub fn to_gpu_bytes(&self) -> [f32; 16] {
         [
-            self.albedo[0], self.albedo[1], self.albedo[2], self.albedo[3],
-            self.metallic, self.roughness, self.ao, self.normal_scale,
-            self.emissive[0], self.emissive[1], self.emissive[2], self.emissive_strength,
-            0.0, 0.0, 0.0, 0.0,
+            self.albedo[0],
+            self.albedo[1],
+            self.albedo[2],
+            self.albedo[3],
+            self.metallic,
+            self.roughness,
+            self.ao,
+            self.normal_scale,
+            self.emissive[0],
+            self.emissive[1],
+            self.emissive[2],
+            self.emissive_strength,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
         ]
     }
 }
 
 impl Default for PbrMaterial {
     fn default() -> Self {
-        Self { albedo: [0.5, 0.5, 0.5, 1.0], metallic: 0.0, roughness: 0.5, ao: 1.0, emissive: [0.0; 3], emissive_strength: 0.0, normal_scale: 1.0 }
+        Self {
+            albedo: [0.5, 0.5, 0.5, 1.0],
+            metallic: 0.0,
+            roughness: 0.5,
+            ao: 1.0,
+            emissive: [0.0; 3],
+            emissive_strength: 0.0,
+            normal_scale: 1.0,
+        }
     }
 }
 
@@ -40,7 +80,12 @@ pub struct PbrLight {
 
 impl PbrLight {
     pub fn new(position: [f32; 3], color: [f32; 3], intensity: f32) -> Self {
-        Self { position, color, intensity, radius: 50.0 }
+        Self {
+            position,
+            color,
+            intensity,
+            radius: 50.0,
+        }
     }
 }
 
@@ -67,5 +112,25 @@ mod tests {
         let bytes = mat.to_gpu_bytes();
         assert_eq!(bytes.len(), 16);
         assert!((bytes[0] - 0.5).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_pbr_setters() {
+        let mut mat = PbrMaterial::default();
+        mat.set_roughness(0.3);
+        assert!((mat.roughness - 0.3).abs() < f32::EPSILON);
+        mat.set_metallic(0.7);
+        assert!((mat.metallic - 0.7).abs() < f32::EPSILON);
+        mat.set_albedo(1.0, 0.0, 0.0, 1.0);
+        assert_eq!(mat.albedo, [1.0, 0.0, 0.0, 1.0]);
+    }
+
+    #[test]
+    fn test_pbr_setters_clamp() {
+        let mut mat = PbrMaterial::default();
+        mat.set_roughness(2.0);
+        assert!((mat.roughness - 1.0).abs() < f32::EPSILON);
+        mat.set_metallic(-1.0);
+        assert!((mat.metallic - 0.0).abs() < f32::EPSILON);
     }
 }

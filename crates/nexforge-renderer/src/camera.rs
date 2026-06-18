@@ -25,13 +25,36 @@ impl Camera {
         }
     }
 
+    pub fn set_fov(&mut self, fov: f32) {
+        self.fov = fov;
+    }
+
+    pub fn get_fov(&self) -> f32 {
+        self.fov
+    }
+
+    pub fn set_speed(&mut self, speed: f32) {
+        self.speed = speed;
+    }
+
+    pub fn set_sensitivity(&mut self, sens: f32) {
+        self.sensitivity = sens;
+    }
+
+    pub fn set_clip_planes(&mut self, near: f32, far: f32) {
+        self.near = near;
+        self.far = far;
+    }
+
+    pub fn reset_position(&mut self) {
+        self.position = [0.0, 1.6, 5.0];
+        self.yaw = -90.0f32.to_radians();
+        self.pitch = 0.0;
+    }
+
     pub fn forward(&self) -> [f32; 3] {
         let cos_pitch = self.pitch.cos();
-        [
-            self.yaw.cos() * cos_pitch,
-            self.pitch.sin(),
-            self.yaw.sin() * cos_pitch,
-        ]
+        [self.yaw.cos() * cos_pitch, self.pitch.sin(), self.yaw.sin() * cos_pitch]
     }
 
     pub fn right(&self) -> [f32; 3] {
@@ -80,7 +103,10 @@ impl Camera {
         let mut result = [[0.0f32; 4]; 4];
         for i in 0..4 {
             for j in 0..4 {
-                result[i][j] = proj[i][0] * view[0][j] + proj[i][1] * view[1][j] + proj[i][2] * view[2][j] + proj[i][3] * view[3][j];
+                result[i][j] = proj[i][0] * view[0][j]
+                    + proj[i][1] * view[1][j]
+                    + proj[i][2] * view[2][j]
+                    + proj[i][3] * view[3][j];
             }
         }
         result
@@ -88,10 +114,7 @@ impl Camera {
 
     pub fn update_mouse(&mut self, dx: f32, dy: f32) {
         self.yaw += dx * self.sensitivity;
-        self.pitch = (self.pitch - dy * self.sensitivity).clamp(
-            -89.0f32.to_radians(),
-            89.0f32.to_radians(),
-        );
+        self.pitch = (self.pitch - dy * self.sensitivity).clamp(-89.0f32.to_radians(), 89.0f32.to_radians());
     }
 
     pub fn update_keyboard(&mut self, horizontal: f32, vertical: f32, sprint: bool) {
@@ -99,9 +122,17 @@ impl Camera {
         let fwd = self.forward();
         let right = self.right();
         let len = (fwd[0] * fwd[0] + fwd[2] * fwd[2]).sqrt();
-        let flat_fwd = if len > 0.0 { [fwd[0] / len, 0.0, fwd[2] / len] } else { [0.0, 0.0, 1.0] };
+        let flat_fwd = if len > 0.0 {
+            [fwd[0] / len, 0.0, fwd[2] / len]
+        } else {
+            [0.0, 0.0, 1.0]
+        };
         let rlen = (right[0] * right[0] + right[2] * right[2]).sqrt();
-        let flat_right = if rlen > 0.0 { [right[0] / rlen, 0.0, right[2] / rlen] } else { [1.0, 0.0, 0.0] };
+        let flat_right = if rlen > 0.0 {
+            [right[0] / rlen, 0.0, right[2] / rlen]
+        } else {
+            [1.0, 0.0, 0.0]
+        };
         let dt = 0.016;
         self.position[0] += flat_fwd[0] * vertical * speed * dt;
         self.position[2] += flat_fwd[2] * vertical * speed * dt;
@@ -187,5 +218,40 @@ mod tests {
         let cam = Camera::new(16.0 / 9.0);
         let look = cam.look_at_matrix();
         assert_eq!(look[3][3], 1.0);
+    }
+
+    #[test]
+    fn test_camera_reset_position() {
+        let mut cam = Camera::new(16.0 / 9.0);
+        cam.position = [10.0, 20.0, 30.0];
+        cam.yaw = 1.0;
+        cam.pitch = 0.5;
+        cam.reset_position();
+        assert_eq!(cam.position, [0.0, 1.6, 5.0]);
+        assert!((cam.yaw - (-90.0f32.to_radians())).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_camera_set_fov() {
+        let mut cam = Camera::new(16.0 / 9.0);
+        cam.set_fov(1.0);
+        assert!((cam.get_fov() - 1.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_camera_set_clip_planes() {
+        let mut cam = Camera::new(16.0 / 9.0);
+        cam.set_clip_planes(0.5, 500.0);
+        assert!((cam.near - 0.5).abs() < f32::EPSILON);
+        assert!((cam.far - 500.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_camera_speed_sensitivity() {
+        let mut cam = Camera::new(16.0 / 9.0);
+        cam.set_speed(10.0);
+        assert!((cam.speed - 10.0).abs() < f32::EPSILON);
+        cam.set_sensitivity(0.005);
+        assert!((cam.sensitivity - 0.005).abs() < f32::EPSILON);
     }
 }

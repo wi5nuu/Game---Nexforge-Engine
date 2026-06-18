@@ -20,6 +20,10 @@ impl Entity {
         }
     }
 
+    pub fn raw_id(&self) -> u64 {
+        (self.index as u64) | ((self.generation as u64) << 32)
+    }
+
     pub fn is_null(&self) -> bool {
         self.index == 0 && self.generation == 0
     }
@@ -62,5 +66,11 @@ mod tests {
     fn test_null_entity() {
         let null = Entity::null();
         assert!(null.is_null());
+    }
+
+    #[test]
+    fn test_entity_raw_id() {
+        let e = Entity::new();
+        assert_ne!(e.raw_id(), 0);
     }
 }

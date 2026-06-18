@@ -185,7 +185,7 @@ mod tests {
     fn test_program_ast() {
         let prog = AstNode::Program(vec![
             AstNode::Int(42),
-            AstNode::Float(3.14),
+            AstNode::Float(std::f64::consts::PI),
             AstNode::Bool(true),
             AstNode::String("hello".to_string()),
             AstNode::Null,

@@ -49,7 +49,10 @@ pub enum CompletionItemKind {
 
 impl LspServer {
     pub fn new() -> Self {
-        Self { documents: HashMap::new(), initialized: false }
+        Self {
+            documents: HashMap::new(),
+            initialized: false,
+        }
     }
 
     pub fn initialize(&mut self) {
@@ -59,12 +62,15 @@ impl LspServer {
     pub fn open_document(&mut self, uri: &str, source: &str) {
         let tokens = self.tokenize_source(source);
         let diagnostics = self.analyze_source(source, &tokens);
-        self.documents.insert(uri.to_string(), DocumentState {
-            uri: uri.to_string(),
-            source: source.to_string(),
-            tokens,
-            diagnostics,
-        });
+        self.documents.insert(
+            uri.to_string(),
+            DocumentState {
+                uri: uri.to_string(),
+                source: source.to_string(),
+                tokens,
+                diagnostics,
+            },
+        );
     }
 
     pub fn update_document(&mut self, uri: &str, source: &str) {
@@ -118,7 +124,7 @@ impl LspServer {
         diagnostics
     }
 
-    pub fn completions(&self, uri: &str, line: usize, _column: usize) -> Vec<CompletionItem> {
+    pub fn completions(&self, uri: &str, _line: usize, _column: usize) -> Vec<CompletionItem> {
         let mut items = Vec::new();
 
         // Keywords
@@ -145,7 +151,11 @@ impl LspServer {
         ];
 
         for (kw, detail, kind) in &keywords {
-            items.push(CompletionItem { label: kw.to_string(), detail: detail.to_string(), kind: kind.clone() });
+            items.push(CompletionItem {
+                label: kw.to_string(),
+                detail: detail.to_string(),
+                kind: kind.clone(),
+            });
         }
 
         // Types
@@ -153,7 +163,11 @@ impl LspServer {
             "int", "float", "bool", "string", "void", "vec2", "vec3", "vec4", "quat", "entity",
         ];
         for t in &types {
-            items.push(CompletionItem { label: t.to_string(), detail: format!("Type: {}", t), kind: CompletionItemKind::Type });
+            items.push(CompletionItem {
+                label: t.to_string(),
+                detail: format!("Type: {}", t),
+                kind: CompletionItemKind::Type,
+            });
         }
 
         // Builtins
@@ -184,7 +198,11 @@ impl LspServer {
         ];
 
         for (name, detail, kind) in &builtins {
-            items.push(CompletionItem { label: name.to_string(), detail: detail.to_string(), kind: kind.clone() });
+            items.push(CompletionItem {
+                label: name.to_string(),
+                detail: detail.to_string(),
+                kind: kind.clone(),
+            });
         }
 
         // Document symbols for current file
@@ -192,11 +210,29 @@ impl LspServer {
             for line_text in doc.source.lines() {
                 let trimmed = line_text.trim();
                 if trimmed.starts_with("fn ") {
-                    let name = trimmed.trim_start_matches("fn ").split('(').next().unwrap_or("").to_string();
-                    items.push(CompletionItem { label: name, detail: "User-defined function".to_string(), kind: CompletionItemKind::Function });
+                    let name = trimmed
+                        .trim_start_matches("fn ")
+                        .split('(')
+                        .next()
+                        .unwrap_or("")
+                        .to_string();
+                    items.push(CompletionItem {
+                        label: name,
+                        detail: "User-defined function".to_string(),
+                        kind: CompletionItemKind::Function,
+                    });
                 } else if trimmed.starts_with("entity ") {
-                    let name = trimmed.trim_start_matches("entity ").split_whitespace().next().unwrap_or("").to_string();
-                    items.push(CompletionItem { label: name, detail: "Entity definition".to_string(), kind: CompletionItemKind::Property });
+                    let name = trimmed
+                        .trim_start_matches("entity ")
+                        .split_whitespace()
+                        .next()
+                        .unwrap_or("")
+                        .to_string();
+                    items.push(CompletionItem {
+                        label: name,
+                        detail: "Entity definition".to_string(),
+                        kind: CompletionItemKind::Property,
+                    });
                 }
             }
         }
@@ -235,15 +271,29 @@ impl LspServer {
 
     fn extract_word_at(line: &str, column: usize) -> Option<String> {
         let col = column.min(line.len());
-        let before = line[..col].chars().rev().take_while(|c| c.is_alphanumeric() || *c == '_').collect::<String>().chars().rev().collect::<String>();
-        let after: String = line[col..].chars().take_while(|c| c.is_alphanumeric() || *c == '_').collect();
-        if before.is_empty() && after.is_empty() { return None; }
+        let before = line[..col]
+            .chars()
+            .rev()
+            .take_while(|c| c.is_alphanumeric() || *c == '_')
+            .collect::<String>()
+            .chars()
+            .rev()
+            .collect::<String>();
+        let after: String = line[col..]
+            .chars()
+            .take_while(|c| c.is_alphanumeric() || *c == '_')
+            .collect();
+        if before.is_empty() && after.is_empty() {
+            return None;
+        }
         Some(format!("{}{}", before, after))
     }
 }
 
 impl Default for LspServer {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]

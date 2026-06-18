@@ -23,11 +23,25 @@ pub struct InputState {
 
 impl InputState {
     pub fn new() -> Self {
-        Self { horizontal: 0.0, vertical: 0.0, mouse_x: 0.0, mouse_y: 0.0, jump: false, shoot: false, reload: false, sprint: false, crouch: false }
+        Self {
+            horizontal: 0.0,
+            vertical: 0.0,
+            mouse_x: 0.0,
+            mouse_y: 0.0,
+            jump: false,
+            shoot: false,
+            reload: false,
+            sprint: false,
+            crouch: false,
+        }
     }
 }
 
-impl Default for InputState { fn default() -> Self { Self::new() } }
+impl Default for InputState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum ScriptEvent {
@@ -46,10 +60,20 @@ pub struct ScriptContext {
 }
 
 impl ScriptContext {
-    pub fn new() -> Self { Self { input: InputState::new(), global_vars: HashMap::new(), query_results: Vec::new() } }
+    pub fn new() -> Self {
+        Self {
+            input: InputState::new(),
+            global_vars: HashMap::new(),
+            query_results: Vec::new(),
+        }
+    }
 }
 
-impl Default for ScriptContext { fn default() -> Self { Self::new() } }
+impl Default for ScriptContext {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 pub struct ScriptEntity {
     pub id: EntityId,
@@ -104,8 +128,7 @@ impl ScriptRuntime {
     }
 
     pub fn load_script_file(&mut self, path: &str) -> Result<(), String> {
-        let source = std::fs::read_to_string(path)
-            .map_err(|e| format!("Failed to read {}: {}", path, e))?;
+        let source = std::fs::read_to_string(path).map_err(|e| format!("Failed to read {}: {}", path, e))?;
         self.load_script(&source)?;
         self.scripts.push(path.to_string());
         Ok(())
@@ -118,7 +141,11 @@ impl ScriptRuntime {
                     self.extract_entities(node)?;
                 }
             }
-            AstNode::EntityDef { name, components, events } => {
+            AstNode::EntityDef {
+                name,
+                components,
+                events,
+            } => {
                 let id = self.next_entity_id;
                 self.next_entity_id += 1;
                 let mut comp_names = Vec::new();
@@ -139,19 +166,24 @@ impl ScriptRuntime {
 
                 let mut handlers = HashMap::new();
                 for event in events {
-                    let handler_source = self.event_handler_to_bytecode(&event)?;
+                    let handler_source = self.event_handler_to_bytecode(event)?;
                     let param_names: Vec<String> = event.params.iter().map(|p| p.name.clone()).collect();
                     handlers.insert(event.name.clone(), (handler_source, param_names));
                 }
 
                 let entity = ScriptEntity {
-                    id, name: name.clone(), components: comp_names,
-                    component_values: comp_values, event_handlers: handlers,
+                    id,
+                    name: name.clone(),
+                    components: comp_names,
+                    component_values: comp_values,
+                    event_handlers: handlers,
                     state_vars: HashMap::new(),
                 };
                 self.entities.insert(id, entity);
 
-                if name == "Player" { self.player_entity = Some(id); }
+                if name == "Player" {
+                    self.player_entity = Some(id);
+                }
             }
             _ => {}
         }
@@ -174,7 +206,9 @@ impl ScriptRuntime {
     }
 
     pub fn fire_event(&mut self, entity_id: EntityId, event: &ScriptEvent) -> Result<(), String> {
-        let entity = self.entities.get(&entity_id)
+        let entity = self
+            .entities
+            .get(&entity_id)
             .ok_or_else(|| format!("Entity {} not found", entity_id))?;
 
         let event_name = match event {
@@ -190,8 +224,16 @@ impl ScriptRuntime {
             if !bytecode.is_empty() {
                 self.vm = Vm::new(bytecode.clone(), self.string_pool.clone());
                 match event {
-                    ScriptEvent::Update(dt) => { self.context.global_vars.insert("dt".to_string(), Value::Float(*dt as f64)); }
-                    ScriptEvent::Collision(other) => { self.context.global_vars.insert("other".to_string(), Value::Int(*other as i32)); }
+                    ScriptEvent::Update(dt) => {
+                        self.context
+                            .global_vars
+                            .insert("dt".to_string(), Value::Float(*dt as f64));
+                    }
+                    ScriptEvent::Collision(other) => {
+                        self.context
+                            .global_vars
+                            .insert("other".to_string(), Value::Int(*other as i32));
+                    }
                     _ => {}
                 }
                 self.vm.run().ok();
@@ -231,7 +273,11 @@ impl ScriptRuntime {
     }
 }
 
-impl Default for ScriptRuntime { fn default() -> Self { Self::new() } }
+impl Default for ScriptRuntime {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -318,5 +364,78 @@ mod tests {
         let entity = rt.entities.values().next().unwrap();
         assert_eq!(entity.name, "Enemy");
         assert!(entity.components.contains(&"Health".to_string()));
+    }
+
+    #[test]
+    fn test_spawn_entity_triggers_event() {
+        let mut rt = ScriptRuntime::new();
+        let source = r#"
+            entity Player {
+                on_spawn() { let x = 1; }
+            }
+        "#;
+        rt.load_script(source).unwrap();
+        let pid = rt.spawn_entity("Player");
+        assert!(pid.is_some());
+    }
+
+    #[test]
+    fn test_spawn_nonexistent_entity() {
+        let mut rt = ScriptRuntime::new();
+        let result = rt.spawn_entity("NonExistent");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_kill_entity() {
+        let mut rt = ScriptRuntime::new();
+        let source = r#"
+            entity Enemy {
+                on_death() { let x = 0; }
+            }
+        "#;
+        rt.load_script(source).unwrap();
+        let id = *rt.entities.keys().next().unwrap();
+        assert!(rt.kill_entity(id).is_ok());
+    }
+
+    #[test]
+    fn test_set_input_state() {
+        let mut rt = ScriptRuntime::new();
+        let input = InputState {
+            horizontal: 1.0,
+            vertical: 0.0,
+            mouse_x: 0.5,
+            mouse_y: 0.0,
+            jump: true,
+            shoot: false,
+            reload: false,
+            sprint: false,
+            crouch: false,
+        };
+        rt.set_input(input);
+        assert!((rt.context.input.horizontal - 1.0).abs() < f32::EPSILON);
+        assert!(rt.context.input.jump);
+    }
+
+    #[test]
+    fn test_multi_entity_script() {
+        let mut rt = ScriptRuntime::new();
+        let source = r#"
+            entity Player {
+                component Health { max: 100, current: 100 }
+                on_update(dt: float) {}
+            }
+            entity Enemy {
+                component Health { max: 50, current: 50 }
+                on_update(dt: float) {}
+            }
+            entity NPC {
+                component Health { max: 30, current: 30 }
+                on_update(dt: float) {}
+            }
+        "#;
+        rt.load_script(source).unwrap();
+        assert_eq!(rt.entities.len(), 3);
     }
 }

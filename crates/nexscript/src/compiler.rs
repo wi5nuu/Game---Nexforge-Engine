@@ -491,9 +491,7 @@ impl Compiler {
 
     fn patch_jump(&mut self, location: usize, target: u16) -> Result<(), CompileError> {
         match &mut self.bytecode[location] {
-            Bytecode::Jmp(ref mut addr)
-            | Bytecode::JmpIf(ref mut addr)
-            | Bytecode::JmpIfNot(ref mut addr) => {
+            Bytecode::Jmp(ref mut addr) | Bytecode::JmpIf(ref mut addr) | Bytecode::JmpIfNot(ref mut addr) => {
                 *addr = target;
                 Ok(())
             }
@@ -543,8 +541,8 @@ mod tests {
 
     #[test]
     fn test_compile_float() {
-        let bc = compile_source("3.14;").unwrap();
-        assert_eq!(bc, vec![Bytecode::PushFloat(3.14), Bytecode::Halt]);
+        let bc = compile_source("3.141592653589793;").unwrap();
+        assert_eq!(bc, vec![Bytecode::PushFloat(std::f64::consts::PI), Bytecode::Halt]);
     }
 
     #[test]
@@ -576,23 +574,13 @@ mod tests {
     #[test]
     fn test_compile_unary_neg() {
         let bc = compile_source("-5;").unwrap();
-        assert_eq!(
-            bc,
-            vec![Bytecode::PushInt(5), Bytecode::Neg, Bytecode::Halt]
-        );
+        assert_eq!(bc, vec![Bytecode::PushInt(5), Bytecode::Neg, Bytecode::Halt]);
     }
 
     #[test]
     fn test_compile_var_decl() {
         let bc = compile_source("let x = 42;").unwrap();
-        assert_eq!(
-            bc,
-            vec![
-                Bytecode::PushInt(42),
-                Bytecode::StoreLocal(0),
-                Bytecode::Halt
-            ]
-        );
+        assert_eq!(bc, vec![Bytecode::PushInt(42), Bytecode::StoreLocal(0), Bytecode::Halt]);
     }
 
     #[test]
