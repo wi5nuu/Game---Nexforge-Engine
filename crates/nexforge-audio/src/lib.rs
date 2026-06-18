@@ -70,6 +70,10 @@ impl SpatialAudioSource {
         Self { position: [0.0; 3], velocity: [0.0; 3], min_distance: 1.0, max_distance: 50.0, volume: 1.0, pitch: 1.0, looping: false, clip: None }
     }
 
+    pub fn set_position(&mut self, pos: [f32; 3]) { self.position = pos; }
+
+    pub fn set_velocity(&mut self, vel: [f32; 3]) { self.velocity = vel; }
+
     pub fn calculate_attenuation(&self, listener_pos: [f32; 3]) -> f32 {
         let dx = self.position[0] - listener_pos[0];
         let dy = self.position[1] - listener_pos[1];
@@ -355,6 +359,20 @@ mod tests {
     fn test_sample_count() {
         let clip = AudioClip::sine_wave(440.0, 1.0, 44100);
         assert_eq!(clip.sample_count(), 44100);
+    }
+
+    #[test]
+    fn test_spatial_source_set_position() {
+        let mut source = SpatialAudioSource::new();
+        source.set_position([1.0, 2.0, 3.0]);
+        assert_eq!(source.position, [1.0, 2.0, 3.0]);
+    }
+
+    #[test]
+    fn test_spatial_source_set_velocity() {
+        let mut source = SpatialAudioSource::new();
+        source.set_velocity([4.0, 5.0, 6.0]);
+        assert_eq!(source.velocity, [4.0, 5.0, 6.0]);
     }
 
     #[test]
