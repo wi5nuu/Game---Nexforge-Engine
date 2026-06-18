@@ -1,5 +1,7 @@
 use crate::camera::Camera;
 use crate::scene::Scene;
+use crate::text::TextRenderer;
+use crate::ui::{UiRect, UiRenderer};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -26,6 +28,8 @@ pub struct RenderContext<'a> {
     pub depth_view: Option<wgpu::TextureView>,
     pub scene: Option<Scene>,
     pub camera: Camera,
+    pub text_renderer: Option<TextRenderer>,
+    pub ui_renderer: Option<UiRenderer>,
 }
 
 impl<'a> RenderContext<'a> {
@@ -40,6 +44,45 @@ impl<'a> RenderContext<'a> {
             depth_view: None,
             scene: None,
             camera: Camera::new(aspect),
+            text_renderer: None,
+            ui_renderer: None,
+        }
+    }
+
+    pub fn create_text_renderer(&mut self) {
+        if let (Some(device), Some(queue), Some(config)) = (&self.device, &self.queue, &self.config) {
+            self.text_renderer = Some(TextRenderer::new(
+                device,
+                queue,
+                config.format,
+                self.size.0 as f32,
+                self.size.1 as f32,
+            ));
+        }
+    }
+
+    pub fn create_ui_renderer(&mut self) {
+        if let (Some(device), Some(config)) = (&self.device, &self.config) {
+            self.ui_renderer = Some(UiRenderer::new(
+                device,
+                config.format,
+                self.size.0 as f32,
+                self.size.1 as f32,
+            ));
+        }
+    }
+
+    /// Queue a UI rectangle to be drawn this frame.
+    pub fn add_ui_rect(&mut self, rect: UiRect) {
+        if let Some(ref mut ui) = self.ui_renderer {
+            ui.add_rect(rect);
+        }
+    }
+
+    /// Clear all queued UI rectangles (call once per frame before adding new ones).
+    pub fn clear_ui(&mut self) {
+        if let Some(ref mut ui) = self.ui_renderer {
+            ui.clear();
         }
     }
 
@@ -149,7 +192,7 @@ impl<'a> RenderContext<'a> {
             });
             {
                 let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    label: Some("Main Pass"),
+                    label: Some("Scene Pass"),
                     color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                         view: &view,
                         resolve_target: None,
@@ -178,6 +221,44 @@ impl<'a> RenderContext<'a> {
                     scene.render(queue, &mut pass, vp_matrix);
                 }
             }
+            {
+                let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("UI Pass"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        view: &view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Load,
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
+                });
+                if let Some(ref mut ui) = self.ui_renderer {
+                    ui.render(queue, &mut pass);
+                }
+            }
+            {
+                let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("Text Pass"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        view: &view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Load,
+                            store: wgpu::StoreOp::Store,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
+                });
+                if let Some(ref mut text) = self.text_renderer {
+                    text.render(device, queue, &mut pass);
+                }
+            }
             queue.submit(std::iter::once(encoder.finish()));
             output.present();
         }
@@ -193,6 +274,12 @@ impl<'a> RenderContext<'a> {
             let (depth_texture, depth_view) = Self::create_depth_texture(device, new_size.0.max(1), new_size.1.max(1));
             self.depth_texture = Some(depth_texture);
             self.depth_view = Some(depth_view);
+        }
+        if let Some(ref mut text) = self.text_renderer {
+            text.resize(new_size.0 as f32, new_size.1 as f32);
+        }
+        if let Some(ref mut ui) = self.ui_renderer {
+            ui.resize(new_size.0 as f32, new_size.1 as f32);
         }
     }
 

@@ -9,6 +9,7 @@ pub struct SceneObject {
     pub bind_group: wgpu::BindGroup,
     pub position: [f32; 3],
     pub scale: f32,
+    pub scale_xyz: Option<[f32; 3]>,
     pub rotation: f32,
 }
 
@@ -22,7 +23,12 @@ impl SceneObject {
     ) -> Self {
         let vertices = create_box_vertices(color);
         let indices: Vec<u16> = vec![
-            0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 0, 4, 5, 0, 5, 1, 1, 5, 6, 1, 6, 2, 2, 6, 7, 2, 7, 3, 3, 7, 4, 3, 4, 0,
+            0, 1, 2, 0, 2, 3,
+            5, 4, 7, 5, 7, 6,
+            8, 9, 10, 8, 10, 11,
+            12, 13, 14, 12, 14, 15,
+            16, 17, 18, 16, 18, 19,
+            20, 21, 22, 20, 22, 23,
         ];
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Scene Object Vertex Buffer"),
@@ -56,19 +62,33 @@ impl SceneObject {
             bind_group,
             position,
             scale,
+            scale_xyz: None,
             rotation: 0.0,
         }
+    }
+
+    pub fn new_scaled(
+        device: &wgpu::Device,
+        layout: &wgpu::BindGroupLayout,
+        position: [f32; 3],
+        color: [f32; 3],
+        scale_xyz: [f32; 3],
+    ) -> Self {
+        let mut obj = Self::new(device, layout, position, color, 1.0);
+        obj.scale_xyz = Some(scale_xyz);
+        obj
     }
 
     pub fn update_uniforms(&self, queue: &wgpu::Queue, vp: [[f32; 4]; 4]) {
         let sin_r = self.rotation.sin();
         let cos_r = self.rotation.cos();
+        let s = self.scale_xyz.unwrap_or([self.scale; 3]);
         let model: [[f32; 4]; 4] = [
-            [cos_r * self.scale, 0.0, sin_r * self.scale, 0.0],
-            [0.0, self.scale, 0.0, 0.0],
-            [-sin_r * self.scale, 0.0, cos_r * self.scale, 0.0],
+            [cos_r * s[0], 0.0, sin_r * s[0], 0.0],
+            [0.0, s[1], 0.0, 0.0],
+            [-sin_r * s[2], 0.0, cos_r * s[2], 0.0],
             [self.position[0], self.position[1], self.position[2], 1.0],
-        ];
+            ];
         let uniforms = Uniforms {
             vp_matrix: vp,
             model_matrix: model,
@@ -86,53 +106,47 @@ impl SceneObject {
 
 fn create_box_vertices(color: [f32; 3]) -> Vec<Vertex> {
     let (r, g, b) = (color[0], color[1], color[2]);
+    let (x0, x1) = (-0.5, 0.5);
+    let (y0, y1) = (-0.5, 0.5);
+    let (z0, z1) = (-0.5, 0.5);
     vec![
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
-            color: [r, g, b],
-            normal: [0.0, 0.0, -1.0],
-        },
-        Vertex {
-            position: [0.5, -0.5, -0.5],
-            color: [r, g, b],
-            normal: [0.0, 0.0, -1.0],
-        },
-        Vertex {
-            position: [0.5, 0.5, -0.5],
-            color: [r, g, b],
-            normal: [0.0, 0.0, -1.0],
-        },
-        Vertex {
-            position: [-0.5, 0.5, -0.5],
-            color: [r, g, b],
-            normal: [0.0, 0.0, -1.0],
-        },
-        Vertex {
-            position: [-0.5, -0.5, 0.5],
-            color: [r, g, b],
-            normal: [0.0, 0.0, 1.0],
-        },
-        Vertex {
-            position: [0.5, -0.5, 0.5],
-            color: [r, g, b],
-            normal: [0.0, 0.0, 1.0],
-        },
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            color: [r, g, b],
-            normal: [0.0, 0.0, 1.0],
-        },
-        Vertex {
-            position: [-0.5, 0.5, 0.5],
-            color: [r, g, b],
-            normal: [0.0, 0.0, 1.0],
-        },
+        // Front face (z+)
+        Vertex { position: [x0, y0, z1], color: [r, g, b], normal: [0.0, 0.0, 1.0] },
+        Vertex { position: [x1, y0, z1], color: [r, g, b], normal: [0.0, 0.0, 1.0] },
+        Vertex { position: [x1, y1, z1], color: [r, g, b], normal: [0.0, 0.0, 1.0] },
+        Vertex { position: [x0, y1, z1], color: [r, g, b], normal: [0.0, 0.0, 1.0] },
+        // Back face (z-)
+        Vertex { position: [x1, y0, z0], color: [r, g, b], normal: [0.0, 0.0, -1.0] },
+        Vertex { position: [x0, y0, z0], color: [r, g, b], normal: [0.0, 0.0, -1.0] },
+        Vertex { position: [x0, y1, z0], color: [r, g, b], normal: [0.0, 0.0, -1.0] },
+        Vertex { position: [x1, y1, z0], color: [r, g, b], normal: [0.0, 0.0, -1.0] },
+        // Right face (x+)
+        Vertex { position: [x1, y0, z0], color: [r, g, b], normal: [1.0, 0.0, 0.0] },
+        Vertex { position: [x1, y0, z1], color: [r, g, b], normal: [1.0, 0.0, 0.0] },
+        Vertex { position: [x1, y1, z1], color: [r, g, b], normal: [1.0, 0.0, 0.0] },
+        Vertex { position: [x1, y1, z0], color: [r, g, b], normal: [1.0, 0.0, 0.0] },
+        // Left face (x-)
+        Vertex { position: [x0, y0, z1], color: [r, g, b], normal: [-1.0, 0.0, 0.0] },
+        Vertex { position: [x0, y0, z0], color: [r, g, b], normal: [-1.0, 0.0, 0.0] },
+        Vertex { position: [x0, y1, z0], color: [r, g, b], normal: [-1.0, 0.0, 0.0] },
+        Vertex { position: [x0, y1, z1], color: [r, g, b], normal: [-1.0, 0.0, 0.0] },
+        // Top face (y+)
+        Vertex { position: [x0, y1, z1], color: [r, g, b], normal: [0.0, 1.0, 0.0] },
+        Vertex { position: [x1, y1, z1], color: [r, g, b], normal: [0.0, 1.0, 0.0] },
+        Vertex { position: [x1, y1, z0], color: [r, g, b], normal: [0.0, 1.0, 0.0] },
+        Vertex { position: [x0, y1, z0], color: [r, g, b], normal: [0.0, 1.0, 0.0] },
+        // Bottom face (y-)
+        Vertex { position: [x0, y0, z0], color: [r, g, b], normal: [0.0, -1.0, 0.0] },
+        Vertex { position: [x1, y0, z0], color: [r, g, b], normal: [0.0, -1.0, 0.0] },
+        Vertex { position: [x1, y0, z1], color: [r, g, b], normal: [0.0, -1.0, 0.0] },
+        Vertex { position: [x0, y0, z1], color: [r, g, b], normal: [0.0, -1.0, 0.0] },
     ]
 }
 
 pub struct Scene {
     pub objects: Vec<SceneObject>,
     pub render_pipeline: wgpu::RenderPipeline,
+    pub bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl Scene {
@@ -183,7 +197,7 @@ impl Scene {
                 topology: wgpu::PrimitiveTopology::TriangleList,
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
+                cull_mode: None,
                 polygon_mode: wgpu::PolygonMode::Fill,
                 unclipped_depth: false,
                 conservative: false,
@@ -213,7 +227,16 @@ impl Scene {
         Self {
             objects,
             render_pipeline,
+            bind_group_layout,
         }
+    }
+
+    pub fn add_object(&mut self, obj: SceneObject) {
+        self.objects.push(obj);
+    }
+
+    pub fn clear_objects(&mut self) {
+        self.objects.clear();
     }
 
     pub fn update(&mut self, dt: f64) {

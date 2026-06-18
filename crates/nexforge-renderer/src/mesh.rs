@@ -51,50 +51,42 @@ impl Mesh {
     }
 
     pub fn colored_cube(device: &wgpu::Device) -> Self {
+        let (x0, x1) = (-0.5, 0.5);
+        let (y0, y1) = (-0.5, 0.5);
+        let (z0, z1) = (-0.5, 0.5);
         let vertices = vec![
-            Vertex {
-                position: [-0.5, -0.5, -0.5],
-                color: [1.0, 0.0, 0.0],
-                normal: [0.0, 0.0, -1.0],
-            },
-            Vertex {
-                position: [0.5, -0.5, -0.5],
-                color: [0.0, 1.0, 0.0],
-                normal: [0.0, 0.0, -1.0],
-            },
-            Vertex {
-                position: [0.5, 0.5, -0.5],
-                color: [0.0, 0.0, 1.0],
-                normal: [0.0, 0.0, -1.0],
-            },
-            Vertex {
-                position: [-0.5, 0.5, -0.5],
-                color: [1.0, 1.0, 0.0],
-                normal: [0.0, 0.0, -1.0],
-            },
-            Vertex {
-                position: [-0.5, -0.5, 0.5],
-                color: [1.0, 0.0, 1.0],
-                normal: [0.0, 0.0, 1.0],
-            },
-            Vertex {
-                position: [0.5, -0.5, 0.5],
-                color: [0.0, 1.0, 1.0],
-                normal: [0.0, 0.0, 1.0],
-            },
-            Vertex {
-                position: [0.5, 0.5, 0.5],
-                color: [0.5, 0.5, 0.5],
-                normal: [0.0, 0.0, 1.0],
-            },
-            Vertex {
-                position: [-0.5, 0.5, 0.5],
-                color: [1.0, 1.0, 1.0],
-                normal: [0.0, 0.0, 1.0],
-            },
+            Vertex { position: [x0, y0, z1], color: [1.0, 0.0, 0.0], normal: [0.0, 0.0, 1.0] },
+            Vertex { position: [x1, y0, z1], color: [1.0, 0.0, 0.0], normal: [0.0, 0.0, 1.0] },
+            Vertex { position: [x1, y1, z1], color: [1.0, 0.0, 0.0], normal: [0.0, 0.0, 1.0] },
+            Vertex { position: [x0, y1, z1], color: [1.0, 0.0, 0.0], normal: [0.0, 0.0, 1.0] },
+            Vertex { position: [x1, y0, z0], color: [0.0, 1.0, 0.0], normal: [0.0, 0.0, -1.0] },
+            Vertex { position: [x0, y0, z0], color: [0.0, 1.0, 0.0], normal: [0.0, 0.0, -1.0] },
+            Vertex { position: [x0, y1, z0], color: [0.0, 1.0, 0.0], normal: [0.0, 0.0, -1.0] },
+            Vertex { position: [x1, y1, z0], color: [0.0, 1.0, 0.0], normal: [0.0, 0.0, -1.0] },
+            Vertex { position: [x1, y0, z0], color: [0.0, 0.0, 1.0], normal: [1.0, 0.0, 0.0] },
+            Vertex { position: [x1, y0, z1], color: [0.0, 0.0, 1.0], normal: [1.0, 0.0, 0.0] },
+            Vertex { position: [x1, y1, z1], color: [0.0, 0.0, 1.0], normal: [1.0, 0.0, 0.0] },
+            Vertex { position: [x1, y1, z0], color: [0.0, 0.0, 1.0], normal: [1.0, 0.0, 0.0] },
+            Vertex { position: [x0, y0, z1], color: [1.0, 1.0, 0.0], normal: [-1.0, 0.0, 0.0] },
+            Vertex { position: [x0, y0, z0], color: [1.0, 1.0, 0.0], normal: [-1.0, 0.0, 0.0] },
+            Vertex { position: [x0, y1, z0], color: [1.0, 1.0, 0.0], normal: [-1.0, 0.0, 0.0] },
+            Vertex { position: [x0, y1, z1], color: [1.0, 1.0, 0.0], normal: [-1.0, 0.0, 0.0] },
+            Vertex { position: [x0, y1, z1], color: [1.0, 0.0, 1.0], normal: [0.0, 1.0, 0.0] },
+            Vertex { position: [x1, y1, z1], color: [1.0, 0.0, 1.0], normal: [0.0, 1.0, 0.0] },
+            Vertex { position: [x1, y1, z0], color: [1.0, 0.0, 1.0], normal: [0.0, 1.0, 0.0] },
+            Vertex { position: [x0, y1, z0], color: [1.0, 0.0, 1.0], normal: [0.0, 1.0, 0.0] },
+            Vertex { position: [x0, y0, z0], color: [0.0, 1.0, 1.0], normal: [0.0, -1.0, 0.0] },
+            Vertex { position: [x1, y0, z0], color: [0.0, 1.0, 1.0], normal: [0.0, -1.0, 0.0] },
+            Vertex { position: [x1, y0, z1], color: [0.0, 1.0, 1.0], normal: [0.0, -1.0, 0.0] },
+            Vertex { position: [x0, y0, z1], color: [0.0, 1.0, 1.0], normal: [0.0, -1.0, 0.0] },
         ];
         let indices: Vec<u16> = vec![
-            0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 0, 4, 5, 0, 5, 1, 1, 5, 6, 1, 6, 2, 2, 6, 7, 2, 7, 3, 3, 7, 4, 3, 4, 0,
+            0, 1, 2, 0, 2, 3,
+            4, 5, 6, 4, 6, 7,
+            8, 9, 10, 8, 10, 11,
+            12, 13, 14, 12, 14, 15,
+            16, 17, 18, 16, 18, 19,
+            20, 21, 22, 20, 22, 23,
         ];
         Self::new(device, &vertices, &indices)
     }
@@ -180,7 +172,7 @@ impl MeshRenderer {
                 topology: wgpu::PrimitiveTopology::TriangleList,
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
+                cull_mode: None,
                 polygon_mode: wgpu::PolygonMode::Fill,
                 unclipped_depth: false,
                 conservative: false,
@@ -260,10 +252,16 @@ fn vs_main(input: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
-    let light_dir = normalize(vec3<f32>(1.0, 3.0, 2.0));
-    let ambient = 0.15;
+    // Primary overhead light
+    let light_dir = normalize(vec3<f32>(0.6, 3.0, 1.5));
+    let ambient = 0.42;
     let diffuse = max(dot(normalize(input.frag_normal), light_dir), 0.0);
-    let brightness = ambient + diffuse * (1.0 - ambient);
-    return vec4<f32>(input.frag_color * brightness, 1.0);
+
+    // Soft fill light from the front-below to kill harsh shadow faces
+    let fill_dir = normalize(vec3<f32>(-0.3, -1.0, -0.8));
+    let fill = max(dot(normalize(input.frag_normal), fill_dir), 0.0) * 0.18;
+
+    let brightness = ambient + diffuse * (1.0 - ambient) + fill;
+    return vec4<f32>(input.frag_color * min(brightness, 1.0), 1.0);
 }
 "#;

@@ -101,29 +101,28 @@ nexforge-engine/
 
 ## Game Systems (nexforge-game)
 
-The game binary implements a complete FPS/TPS game loop:
+The game binary implements a 3D FPS wave-survival arena shooter:
 
-| System            | Responsibility                                                |
-|-------------------|--------------------------------------------------------------|
-| PlayerSystem      | Movement speed (6.0), mouse sensitivity (0.002), jump force (8.0), delegates to NexScript |
-| EnemySystem       | Enemy entity lifecycle management, kill handling             |
-| WeaponSystem      | Cooldown management per entity, fire delegation to NexScript |
-| GameManagerSystem | Score tracking, round progression (5 + (round-1)*2 enemies), game-over detection |
+| System         | Responsibility                                                    |
+|----------------|------------------------------------------------------------------|
+| Wave Survival  | 3 escalating waves (3/5/7 enemies), 2s cooldown between waves, Victory after wave 3 |
+| Combat         | Semi-auto rifle (25 damage), 30-round magazine, 1.5s reload (R key) |
+| Enemies        | 3 types: Fast (30 HP, 1.4x speed), Normal (50 HP), Tanky (80 HP, 0.7x speed) |
+| Enemy AI       | Patrol 3 waypoints, chase within 8 units, shoot at player when in range |
+| Items          | 8 collectibles: gold (+100 score) and green health (+25 HP) with float animation |
+| HUD            | HP bar, ammo bar, wave counter, timer, crosshair, enemy health bars, gun view model |
+| Screens        | Menu screen (controls/objectives), Pause (ESC), Victory/GameOver with stats |
 
-Input bindings:
-| Key/Input         | Action                  |
-|-------------------|-------------------------|
-| W / S             | Forward / backward      |
-| A / D             | Strafe left / right     |
-| Space             | Jump                    |
-| ShiftLeft         | Sprint                  |
-| ControlLeft       | Crouch                  |
-| R                 | Reload                  |
-| Mouse Left        | Shoot                   |
-| Mouse Move        | Look (delta * 0.002)    |
-| F12               | Toggle dev console      |
-| F1                | Toggle profiler         |
-| Escape            | Quit                    |
+Controls:
+| Key/Input         | Action               |
+|-------------------|----------------------|
+| W / A / S / D     | Camera-relative move |
+| Mouse Move        | Look around          |
+| Mouse Left Click  | Shoot                |
+| R                 | Reload               |
+| ShiftLeft         | Sprint               |
+| ENTER             | Start / Restart      |
+| ESC               | Pause / Quit to menu |
 
 ---
 

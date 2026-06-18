@@ -11,3 +11,5 @@ nexforge-core = { path = "../crates/nexforge-core" }
 nexscript = { path = "../crates/nexscript" }
 nexforge-renderer = { path = "../crates/nexforge-renderer" }
 winit = { workspace = true }
+rand = "0.8"
+wgpu = { workspace = true }
