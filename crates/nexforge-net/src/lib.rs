@@ -92,6 +92,12 @@ impl InputBuffer {
     pub fn latest_frame(&self) -> u32 { self.inputs.last().map(|i| i.frame).unwrap_or(0) }
 
     pub fn clear(&mut self) { self.inputs.clear(); }
+
+    pub fn capacity(&self) -> usize { self.max_size }
+
+    pub fn len(&self) -> usize { self.inputs.len() }
+
+    pub fn is_empty(&self) -> bool { self.inputs.is_empty() }
 }
 
 pub struct RollbackManager {
@@ -126,6 +132,8 @@ impl RollbackManager {
     }
 
     pub fn advance_frame(&mut self) { self.current_frame += 1; }
+
+    pub fn snapshot_count(&self) -> usize { self.snapshots.len() }
 
     pub fn predict(&self, snapshot: &WorldSnapshot, inputs: &[PlayerInput]) -> WorldSnapshot {
         let mut predicted = snapshot.clone();
@@ -368,5 +376,30 @@ mod tests {
         let snap = WorldSnapshot { frame: 5, entities: vec![EntitySnapshot { id: 1, position: [1.0, 2.0, 3.0], rotation: [0.0, 0.0, 0.0, 1.0], velocity: [0.0; 3], health: 100.0 }] };
         assert_eq!(snap.frame, 5);
         assert_eq!(snap.entities.len(), 1);
+    }
+
+    #[test]
+    fn test_input_buffer_capacity() {
+        let buf = InputBuffer::new(32);
+        assert_eq!(buf.capacity(), 32);
+        assert!(buf.is_empty());
+    }
+
+    #[test]
+    fn test_input_buffer_len() {
+        let mut buf = InputBuffer::new(10);
+        buf.push(PlayerInput::new());
+        assert_eq!(buf.len(), 1);
+        assert!(!buf.is_empty());
+        buf.clear();
+        assert_eq!(buf.len(), 0);
+    }
+
+    #[test]
+    fn test_rollback_snapshot_count() {
+        let mut rm = RollbackManager::new();
+        assert_eq!(rm.snapshot_count(), 0);
+        rm.save_snapshot(WorldSnapshot { frame: 1, entities: vec![] });
+        assert_eq!(rm.snapshot_count(), 1);
     }
 }
