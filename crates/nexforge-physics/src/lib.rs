@@ -117,6 +117,14 @@ impl PhysicsEngine {
         Ok(())
     }
 
+    pub fn set_gravity(&mut self, gravity: [f32; 3]) {
+        self.gravity = gravity;
+    }
+
+    pub fn get_gravity(&self) -> [f32; 3] {
+        self.gravity
+    }
+
     pub fn step(&mut self, dt: f32) {
         for cc in &mut self.character_controllers {
             cc.velocity[1] += self.gravity[1] * dt;
@@ -161,6 +169,14 @@ mod tests {
     fn test_default_gravity() {
         let engine = PhysicsEngine::new();
         assert_eq!(engine.gravity[1], -9.81);
+    }
+
+    #[test]
+    fn test_set_get_gravity() {
+        let mut engine = PhysicsEngine::new();
+        assert_eq!(engine.get_gravity(), [0.0, -9.81, 0.0]);
+        engine.set_gravity([0.0, -5.0, 0.0]);
+        assert_eq!(engine.get_gravity(), [0.0, -5.0, 0.0]);
     }
 
     #[test]
