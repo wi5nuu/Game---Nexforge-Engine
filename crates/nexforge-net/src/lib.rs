@@ -348,4 +348,25 @@ mod tests {
         let found = rm.find_snapshot(0);
         assert!(found.is_some());
     }
+
+    #[test]
+    fn test_net_error_display() {
+        let err = NetError::NotConnected;
+        assert_eq!(format!("{}", err), "Not connected to server");
+    }
+
+    #[test]
+    fn test_player_input_defaults() {
+        let input = PlayerInput::default();
+        assert_eq!(input.frame, 0);
+        assert!(!input.forward);
+        assert!(!input.shoot);
+    }
+
+    #[test]
+    fn test_world_snapshot_creation() {
+        let snap = WorldSnapshot { frame: 5, entities: vec![EntitySnapshot { id: 1, position: [1.0, 2.0, 3.0], rotation: [0.0, 0.0, 0.0, 1.0], velocity: [0.0; 3], health: 100.0 }] };
+        assert_eq!(snap.frame, 5);
+        assert_eq!(snap.entities.len(), 1);
+    }
 }
