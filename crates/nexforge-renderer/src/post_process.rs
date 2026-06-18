@@ -100,6 +100,10 @@ impl PostProcessStack {
         Self { bloom: BloomPass::new(), ssao: SSAOPass::new(), tone_mapping: ToneMapping::ACES, motion_blur: MotionBlurPass::new() }
     }
 
+    pub fn set_tonemapping(&mut self, tm: ToneMapping) { self.tone_mapping = tm; }
+
+    pub fn set_bloom_intensity(&mut self, intensity: f32) { self.bloom.intensity = intensity; }
+
     pub fn apply(&self, color: [f32; 3]) -> [f32; 3] {
         let mut c = color;
         c = self.bloom.apply(c);
@@ -134,5 +138,19 @@ mod tests {
         let bloom = BloomPass::new();
         let result = bloom.apply([3.0, 3.0, 3.0]);
         assert!(result[0] > 3.0); // Bright pixel gets bloom
+    }
+
+    #[test]
+    fn test_set_tonemapping() {
+        let mut pp = PostProcessStack::new();
+        pp.set_tonemapping(ToneMapping::Reinhard);
+        assert_eq!(pp.tone_mapping, ToneMapping::Reinhard);
+    }
+
+    #[test]
+    fn test_set_bloom_intensity() {
+        let mut pp = PostProcessStack::new();
+        pp.set_bloom_intensity(0.8);
+        assert!((pp.bloom.intensity - 0.8).abs() < f32::EPSILON);
     }
 }
