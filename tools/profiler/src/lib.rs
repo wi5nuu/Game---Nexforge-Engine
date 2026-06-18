@@ -93,6 +93,8 @@ impl FrameProfiler {
         }
     }
 
+    pub fn is_visible(&self) -> bool { self.visible }
+
     pub fn toggle(&mut self) {
         self.visible = !self.visible;
     }
@@ -362,5 +364,13 @@ mod tests {
         assert_eq!(profiler.max_history, 10);
         profiler.set_max_history(100);
         assert_eq!(profiler.max_history, 100);
+    }
+
+    #[test]
+    fn test_profiler_is_visible() {
+        let mut profiler = FrameProfiler::new(128);
+        assert!(!profiler.is_visible());
+        profiler.toggle();
+        assert!(profiler.is_visible());
     }
 }
