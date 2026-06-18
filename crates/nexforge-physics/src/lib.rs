@@ -97,6 +97,10 @@ impl TriggerZone {
         Self { position, radius, active: true, entities_inside: Vec::new() }
     }
 
+    pub fn set_position(&mut self, pos: [f32; 3]) { self.position = pos; }
+
+    pub fn set_radius(&mut self, r: f32) { self.radius = r; }
+
     pub fn contains(&self, point: [f32; 3]) -> bool {
         let dx = point[0] - self.position[0];
         let dy = point[1] - self.position[1];
@@ -200,6 +204,15 @@ mod tests {
         assert_eq!(engine.trigger_zones.len(), 1);
         engine.clear_trigger_zones();
         assert!(engine.trigger_zones.is_empty());
+    }
+
+    #[test]
+    fn test_trigger_zone_setters() {
+        let mut zone = TriggerZone::new([0.0, 0.0, 0.0], 5.0);
+        zone.set_position([1.0, 2.0, 3.0]);
+        assert_eq!(zone.position, [1.0, 2.0, 3.0]);
+        zone.set_radius(10.0);
+        assert!((zone.radius - 10.0).abs() < f32::EPSILON);
     }
 
     #[test]
