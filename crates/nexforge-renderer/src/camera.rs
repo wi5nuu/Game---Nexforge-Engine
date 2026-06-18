@@ -29,6 +29,10 @@ impl Camera {
 
     pub fn get_fov(&self) -> f32 { self.fov }
 
+    pub fn set_speed(&mut self, speed: f32) { self.speed = speed; }
+
+    pub fn set_sensitivity(&mut self, sens: f32) { self.sensitivity = sens; }
+
     pub fn set_clip_planes(&mut self, near: f32, far: f32) { self.near = near; self.far = far; }
 
     pub fn reset_position(&mut self) {
@@ -225,5 +229,14 @@ mod tests {
         cam.set_clip_planes(0.5, 500.0);
         assert!((cam.near - 0.5).abs() < f32::EPSILON);
         assert!((cam.far - 500.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_camera_speed_sensitivity() {
+        let mut cam = Camera::new(16.0 / 9.0);
+        cam.set_speed(10.0);
+        assert!((cam.speed - 10.0).abs() < f32::EPSILON);
+        cam.set_sensitivity(0.005);
+        assert!((cam.sensitivity - 0.005).abs() < f32::EPSILON);
     }
 }
