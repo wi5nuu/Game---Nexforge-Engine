@@ -133,6 +133,14 @@ impl PhysicsEngine {
         self.trigger_zones.retain(|z| z.active);
     }
 
+    pub fn clear_trigger_zones(&mut self) {
+        self.trigger_zones.clear();
+    }
+
+    pub fn add_trigger_zone(&mut self, zone: TriggerZone) {
+        self.trigger_zones.push(zone);
+    }
+
     pub fn raycast(&self, origin: [f32; 3], direction: [f32; 3], max_dist: f32) -> Vec<RaycastHit> {
         let mut hits = Vec::new();
         let candidates = self.bvh.query(origin, direction);
@@ -177,6 +185,15 @@ mod tests {
         assert_eq!(engine.get_gravity(), [0.0, -9.81, 0.0]);
         engine.set_gravity([0.0, -5.0, 0.0]);
         assert_eq!(engine.get_gravity(), [0.0, -5.0, 0.0]);
+    }
+
+    #[test]
+    fn test_clear_trigger_zones() {
+        let mut engine = PhysicsEngine::new();
+        engine.add_trigger_zone(TriggerZone::new([0.0, 0.0, 0.0], 5.0));
+        assert_eq!(engine.trigger_zones.len(), 1);
+        engine.clear_trigger_zones();
+        assert!(engine.trigger_zones.is_empty());
     }
 
     #[test]
