@@ -45,6 +45,6 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: nexforge-engine-*
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
